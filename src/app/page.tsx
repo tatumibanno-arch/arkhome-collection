@@ -392,9 +392,6 @@ function MainContent() {
       {/* マニフェストタブ */}
       <div className={`page wide ${activeTab === 'manifest' ? 'on' : ''}`}>
         <div className="ph">現場回収依頼書（兼電子マニフェスト受渡確認票）</div>
-        <div className="ps">
-          石綿ありの場合はタブで切り替えて2枚印刷。印刷はA4横で設定してください。
-        </div>
         <div className="manifest-area">
           <div
             className="mf-sel"
