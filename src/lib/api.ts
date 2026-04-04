@@ -181,6 +181,8 @@ export async function getRouting(
     processor: findVendor(mapping.processor_id),
     dest: findVendor(mapping.dest_id),
     transfer: findVendor(mapping.transfer_id),
+    carrier2: findVendor(mapping.carrier2_id || null),
+    final_dest: findVendor(mapping.final_dest_id || null),
     fax: mapping.fax,
   };
 }
@@ -214,6 +216,8 @@ function parseRouting(raw: string | RoutingInfo | null): RoutingInfo | null {
     processor: snap(r.processor),
     dest:      snap(r.dest),
     transfer:  snap(r.transfer),
+    carrier2:  snap(r.carrier2),
+    final_dest: snap(r.final_dest),
     fax: r.fax || null,
   };
 }
