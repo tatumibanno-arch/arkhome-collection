@@ -8,7 +8,7 @@ export interface Store {
 }
 
 // 業者カテゴリ
-export type VendorCategory = 'carrier' | 'processor' | 'dest' | 'transfer';
+export type VendorCategory = 'carrier' | 'processor' | 'dest' | 'transfer' | 'carrier2' | 'final_dest';
 
 // 業者
 export interface Vendor {
@@ -39,6 +39,8 @@ export interface StoreVendorMapping {
   processor_id: string | null;
   dest_id: string | null;
   transfer_id: string | null;
+  carrier2_id: string | null;
+  final_dest_id: string | null;
   fax: string | null;
   created_at: string;
   updated_at: string;
@@ -56,6 +58,8 @@ export interface RoutingInfo {
   processor: VendorSnapshot | null;
   dest: VendorSnapshot | null;
   transfer: VendorSnapshot | null;
+  carrier2: VendorSnapshot | null;
+  final_dest: VendorSnapshot | null;
   fax: string | null;
 }
 
@@ -152,6 +156,8 @@ export const CATEGORY_NAMES: Record<VendorCategory, string> = {
   processor: '処分業者',
   dest: '運搬先の事業所',
   transfer: '積替え保管',
+  carrier2: '2次収集運搬業者',
+  final_dest: '最終処分場',
 };
 
 // 定数
