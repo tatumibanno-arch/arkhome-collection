@@ -1491,12 +1491,16 @@ table.mf th {
 }
 
 /* Print Styles */
+@page {
+  size: A4 landscape;
+  margin: 8mm;
+}
+
 @media print {
   body {
     background: #fff;
   }
 
-  /* ナビ・ツールバー・選択UIを全て非表示 */
   nav,
   .kb-toolbar,
   .mf-toolbar,
@@ -1509,12 +1513,10 @@ table.mf th {
     display: none !important;
   }
 
-  /* 全ページ非表示 */
   .page {
     display: none !important;
   }
 
-  /* マニフェストタブだけ表示 */
   .page.wide.on {
     display: block !important;
     padding: 0;
@@ -1534,5 +1536,13 @@ table.mf th {
     border: none;
     box-shadow: none;
     border-radius: 0;
+    width: 100%;
+    font-size: 9px;
+    page-break-inside: avoid;
+  }
+
+  .manifest table {
+    width: 100% !important;
+    table-layout: fixed !important;
   }
 }
