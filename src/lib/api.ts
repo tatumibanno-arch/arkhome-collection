@@ -189,13 +189,46 @@ export async function getRouting(
 // 回収依頼 (Requests)
 // =====================================================
 
+// routing_none / routing_asb の文字列JSONをパース＆フィールド正規化
+// DBからは文字列で来るため、RoutingInfo型に変換する
+function parseRouting(raw: string | RoutingInfo | null): RoutingInfo | null {
+  if (!raw) return null;
+  const r: any = typeof raw === 'string' ? JSON.parse(raw) : raw;
+  // すでに正しい型の場合はそのまま返す
+  if (r.carrier && typeof r.carrier === 'object' && 'no' in r.carrier) return r as RoutingInfo;
+  const snap = (v: any): VendorSnapshot | null => {
+    if (!v) return null;
+    return {
+      name: v.name || '',
+      tel: v.tel || '',
+      no: v.jwnet_no || v.no || '',       // vendors: jwnet_no → VendorSnapshot: no
+      pw: v.jwnet_pw || v.pw || '',        // vendors: jwnet_pw → VendorSnapshot: pw
+      zip: v.zip || '',
+      addr: v.address || v.addr || '',     // vendors: address → VendorSnapshot: addr
+      fax: v.fax || '',
+      contact: v.contact || '',
+    };
+  };
+  return {
+    carrier:   snap(r.carrier),
+    processor: snap(r.processor),
+    dest:      snap(r.dest),
+    transfer:  snap(r.transfer),
+    fax: r.fax || null,
+  };
+}
+
 export async function getRequests(): Promise<Request[]> {
   const { data, error } = await supabase
     .from('requests')
     .select('*')
     .order('created_at', { ascending: false });
   if (error) throw error;
-  return data || [];
+  return (data || []).map((r: any) => ({
+    ...r,
+    routing_none: parseRouting(r.routing_none),
+    routing_asb:  parseRouting(r.routing_asb),
+  }));
 }
 
 export async function getRequestById(id: string): Promise<Request | null> {
@@ -205,7 +238,11 @@ export async function getRequestById(id: string): Promise<Request | null> {
     .eq('id', id)
     .single();
   if (error) return null;
-  return data;
+  return data ? {
+    ...data,
+    routing_none: parseRouting(data.routing_none),
+    routing_asb:  parseRouting(data.routing_asb),
+  } : null;
 }
 
 export async function createRequest(
