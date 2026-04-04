@@ -24,7 +24,7 @@ import {
 } from '@/lib/api';
 import { useToast } from './Toast';
 
-const CAT_KEYS: VendorCategory[] = ['carrier', 'processor', 'dest', 'transfer'];
+const CAT_KEYS: VendorCategory[] = ['carrier', 'processor', 'dest', 'transfer', 'carrier2', 'final_dest'];
 
 export default function Settings() {
   const { showToast } = useToast();
@@ -200,6 +200,8 @@ export default function Settings() {
         processor: asbMapping?.processor_id || '',
         dest: asbMapping?.dest_id || '',
         transfer: asbMapping?.transfer_id || '',
+        carrier2: asbMapping?.carrier2_id || '',
+        final_dest: asbMapping?.final_dest_id || '',
       },
     });
     setMappingModalOpen(true);
@@ -226,6 +228,8 @@ export default function Settings() {
         processor_id: newData[type].processor || null,
         dest_id: newData[type].dest || null,
         transfer_id: newData[type].transfer || null,
+        carrier2_id: newData[type].carrier2 || null,
+        final_dest_id: newData[type].final_dest || null,
         fax: '06-6432-6744',
       });
       showToast('紐付けを更新しました');
