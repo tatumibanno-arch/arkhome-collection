@@ -1496,17 +1496,38 @@ table.mf th {
     background: #fff;
   }
 
+  /* ナビ・ツールバー・選択UIを全て非表示 */
   nav,
   .kb-toolbar,
   .mf-toolbar,
-  .toast {
+  .mf-sel,
+  .mf-tabs,
+  .toast,
+  .tabs,
+  .brand,
+  .prt-btn {
     display: none !important;
   }
 
+  /* 全ページ非表示 */
   .page {
+    display: none !important;
+  }
+
+  /* マニフェストタブだけ表示 */
+  .page.wide.on {
     display: block !important;
     padding: 0;
     max-width: none;
+  }
+
+  .manifest-area .mf-sel,
+  .manifest-area .mf-tabs {
+    display: none !important;
+  }
+
+  #mf-area {
+    display: block !important;
   }
 
   .manifest {
