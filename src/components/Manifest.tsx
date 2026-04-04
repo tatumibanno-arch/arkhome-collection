@@ -24,6 +24,8 @@ export default function Manifest({ request, type }: ManifestProps) {
   const processor = rt.processor || { name: '', tel: '', no: '', pw: '', zip: '', addr: '', fax: '', contact: '' };
   const dest = rt.dest || { name: '', tel: '', no: '', pw: '', zip: '', addr: '', fax: '', contact: '' };
   const transfer = rt.transfer;
+  const carrier2 = rt.carrier2 || null;
+  const finalDest = rt.final_dest || null;
   const faxNo = rt.fax || KYOEI_FAX;
 
   const d = formatDate(request.collection_date);
@@ -509,6 +511,42 @@ export default function Manifest({ request, type }: ManifestProps) {
                     : '＊＊＊＊＊＊＊＊＊＊＊'}
                 </td>
               </tr>
+              {/* 2次収集運搬・最終処分場（carrier2がある場合のみ表示） */}
+              {carrier2 && (
+                <>
+                  <tr>
+                    <td className="lbl" style={{ writingMode: 'vertical-rl', fontSize: '10px', textAlign: 'center', width: '26px', minWidth: '26px', padding: '4px 2px' }} rowSpan={2}>
+                      2次収集運搬
+                    </td>
+                    <td className="lbl" style={{ width: '7%' }}>氏名又は名称</td>
+                    <td className="val" style={{ fontWeight: 700 }}>{carrier2.name || '　'}</td>
+                    <td className="lbl" style={{ textAlign: 'center', fontSize: '9px' }}>加入者番号</td>
+                    <td className="val">{carrier2.no || '　'}</td>
+                    <td className="lbl" style={{ textAlign: 'center', fontSize: '9px' }}>公開パスワード</td>
+                    <td className="val">{carrier2.pw || '　'}</td>
+                    <td className="lbl" style={{ writingMode: 'vertical-rl', fontSize: '10px', textAlign: 'center', width: '26px', minWidth: '26px', padding: '4px 2px' }} rowSpan={2}>
+                      最終処分場
+                    </td>
+                    <td className="lbl" style={{ width: '7%' }}>氏名又は名称</td>
+                    <td className="val" style={{ fontWeight: 700 }}>{finalDest ? finalDest.name : '　'}</td>
+                    <td className="lbl" style={{ textAlign: 'center', fontSize: '9px' }}>加入者番号</td>
+                    <td className="val">{finalDest ? finalDest.no : '　'}</td>
+                    <td className="lbl" style={{ textAlign: 'center', fontSize: '9px' }}>公開パスワード</td>
+                    <td className="val">{finalDest ? finalDest.pw : '　'}</td>
+                  </tr>
+                  <tr>
+                    <td className="lbl" style={{ verticalAlign: 'middle' }}>住所</td>
+                    <td className="val" colSpan={5} style={{ lineHeight: 1.6, padding: '5px 6px', fontSize: '10px', verticalAlign: 'middle' }}>
+                      〒{carrier2.zip || ''}　TEL {carrier2.tel || ''}
+                      <br />{carrier2.addr || ''}
+                    </td>
+                    <td className="lbl" style={{ verticalAlign: 'middle' }}>所在地</td>
+                    <td className="val" colSpan={5} style={{ lineHeight: 1.6, padding: '5px 6px', fontSize: '10px', verticalAlign: 'middle' }}>
+                      {finalDest ? `〒${finalDest.zip || ''}　TEL ${finalDest.tel || ''}\n${finalDest.addr || ''}` : '　'}
+                    </td>
+                  </tr>
+                </>
+              )}
             </tbody>
           </table>
         </div>
