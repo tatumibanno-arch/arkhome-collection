@@ -1541,6 +1541,15 @@ table.mf th {
     page-break-inside: avoid;
   }
 
+  /* 印刷時にセル内テキストがはみ出さないようにする */
+  .manifest td,
+  .manifest th {
+    overflow: hidden !important;
+    word-break: break-all !important;
+    white-space: normal !important;
+    max-width: 0;
+  }
+
   .manifest table {
     width: 100% !important;
     table-layout: fixed !important;
