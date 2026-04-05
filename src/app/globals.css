@@ -1452,8 +1452,8 @@ table.mf th {
 }
 
 .sign-cell {
-  padding: 10px 12px;
-  min-height: 62px;
+  padding: 8px 12px;
+  min-height: 50px;
   border-right: 1px solid #ddd;
 }
 
@@ -1576,20 +1576,25 @@ table.mf th {
   }
 
   .manifest .sign-row {
-    margin-top: 1px;
+    margin-top: 0;
   }
 
   .manifest .sign-cell {
-    padding: 6px 8px;
-    min-height: 40px;
+    padding: 3px 8px;
+    min-height: 30px;
+  }
+
+  .manifest .sign-cell .sign-lbl {
+    font-size: 8px;
+    margin-bottom: 1px;
   }
 
   .manifest .fax-footer {
-    font-size: 9px;
+    font-size: 8px;
   }
 
   .manifest .fax-cell {
-    padding: 4px 8px;
+    padding: 3px 6px;
   }
 
   /* 印刷時にセル内テキストがはみ出さないようにする */
@@ -1607,7 +1612,7 @@ table.mf th {
   }
 
   /* 品目セクションの高さを抑える */
-  .manifest table.mf tr[style*="height: 86px"] {
+  .manifest table.mf tr[style*="height"] {
     height: auto !important;
   }
 }
