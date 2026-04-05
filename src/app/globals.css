@@ -1493,12 +1493,14 @@ table.mf th {
 /* Print Styles */
 @page {
   size: A4 landscape;
-  margin: 8mm;
+  margin: 5mm;
 }
 
 @media print {
   body {
     background: #fff;
+    margin: 0;
+    padding: 0;
   }
 
   nav,
@@ -1537,8 +1539,57 @@ table.mf th {
     box-shadow: none;
     border-radius: 0;
     width: 100%;
-    font-size: 9px;
+    font-size: 8px;
     page-break-inside: avoid;
+  }
+
+  .manifest .mf-title-row {
+    padding: 3px 8px;
+  }
+
+  .manifest .mf-title-row .title {
+    font-size: 11px;
+  }
+
+  .manifest .mf-date-box {
+    padding: 2px 8px;
+    font-size: 9px;
+  }
+
+  .manifest .mf-date-box .date-val {
+    font-size: 11px;
+  }
+
+  .manifest table.mf td,
+  .manifest table.mf th {
+    padding: 2px 4px;
+    font-size: 8.5px;
+    line-height: 1.3;
+  }
+
+  .manifest .lbl {
+    font-size: 8px;
+  }
+
+  .manifest .val {
+    font-size: 8.5px;
+  }
+
+  .manifest .sign-row {
+    margin-top: 1px;
+  }
+
+  .manifest .sign-cell {
+    padding: 6px 8px;
+    min-height: 40px;
+  }
+
+  .manifest .fax-footer {
+    font-size: 9px;
+  }
+
+  .manifest .fax-cell {
+    padding: 4px 8px;
   }
 
   /* 印刷時にセル内テキストがはみ出さないようにする */
@@ -1553,5 +1604,10 @@ table.mf th {
   .manifest table {
     width: 100% !important;
     table-layout: fixed !important;
+  }
+
+  /* 品目セクションの高さを抑える */
+  .manifest table.mf tr[style*="height: 86px"] {
+    height: auto !important;
   }
 }
