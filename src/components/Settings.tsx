@@ -54,11 +54,11 @@ export default function Settings() {
   const [mappingModalOpen, setMappingModalOpen] = useState(false);
   const [mappingStore, setMappingStore] = useState<Store | null>(null);
   const [mappingData, setMappingData] = useState<{
-    none: { carrier: string; processor: string; dest: string; transfer: string };
-    asb: { carrier: string; processor: string; dest: string; transfer: string };
+    none: { carrier: string; processor: string; dest: string; transfer: string; carrier2: string; final_dest: string };
+    asb: { carrier: string; processor: string; dest: string; transfer: string; carrier2: string; final_dest: string };
   }>({
-    none: { carrier: '', processor: '', dest: '', transfer: '' },
-    asb: { carrier: '', processor: '', dest: '', transfer: '' },
+    none: { carrier: '', processor: '', dest: '', transfer: '', carrier2: '', final_dest: '' },
+    asb: { carrier: '', processor: '', dest: '', transfer: '', carrier2: '', final_dest: '' },
   });
 
   useEffect(() => {
@@ -194,6 +194,8 @@ export default function Settings() {
         processor: noneMapping?.processor_id || '',
         dest: noneMapping?.dest_id || '',
         transfer: '',
+        carrier2: noneMapping?.carrier2_id || '',
+        final_dest: noneMapping?.final_dest_id || '',
       },
       asb: {
         carrier: asbMapping?.carrier_id || '',
@@ -209,7 +211,7 @@ export default function Settings() {
 
   const handleMappingChange = async (
     type: 'none' | 'asb',
-    field: 'carrier' | 'processor' | 'dest' | 'transfer',
+    field: 'carrier' | 'processor' | 'dest' | 'transfer' | 'carrier2' | 'final_dest',
     value: string
   ) => {
     if (!mappingStore) return;
