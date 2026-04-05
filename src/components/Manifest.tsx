@@ -286,7 +286,7 @@ export default function Manifest({ request, type }: ManifestProps) {
           {/* 品目 */}
           <table className="mf" style={{ borderLeft: 'none', borderTop: 'none', tableLayout: 'fixed', width: '100%' }}>
             <tbody>
-              <tr style={{ height: '86px' }}>
+              <tr style={{ height: '70px' }}>
                 <td
                   style={{
                     background: '#d6e4f7',
@@ -511,42 +511,76 @@ export default function Manifest({ request, type }: ManifestProps) {
                     : '＊＊＊＊＊＊＊＊＊＊＊'}
                 </td>
               </tr>
-              {/* 最終処分先・収集運搬2（carrier2がある場合のみ表示） */}
-              {carrier2 && (
+              {/* 最終処分先・収集運搬区間2（carrier2 or finalDest がある場合のみ表示） */}
+              {(carrier2 || finalDest) && (
                 <>
+                  {/* 最終処分先 行1 | 収集運搬区間2 行1 */}
                   <tr>
-                    <td className="lbl" style={{ writingMode: 'vertical-rl', fontSize: '10px', textAlign: 'center', width: '26px', minWidth: '26px', padding: '4px 2px' }} rowSpan={2}>
+                    <td
+                      className="lbl"
+                      style={{
+                        writingMode: 'vertical-rl',
+                        fontSize: '10px',
+                        textAlign: 'center',
+                        width: '26px',
+                        minWidth: '26px',
+                        padding: '4px 2px',
+                      }}
+                      rowSpan={2}
+                    >
                       最終処分先
                     </td>
                     <td className="lbl">氏名又は名称</td>
                     <td className="val" style={{ fontWeight: 700 }} colSpan={5}>
                       {finalDest ? finalDest.name : '　'}
                     </td>
-                    <td className="lbl" style={{ writingMode: 'vertical-rl', fontSize: '9px', textAlign: 'center', width: '26px', minWidth: '26px', padding: '4px 2px' }} rowSpan={2}>
-                      収集運搬
-                    </td>
-                    <td className="lbl" style={{ writingMode: 'vertical-rl', fontSize: '9px', textAlign: 'center', width: '26px', minWidth: '26px', padding: '4px 2px' }} rowSpan={2}>
-                      区間2
+                    <td
+                      className="lbl"
+                      style={{
+                        writingMode: 'vertical-rl',
+                        fontSize: '9px',
+                        textAlign: 'center',
+                        width: '26px',
+                        minWidth: '26px',
+                        padding: '4px 2px',
+                        lineHeight: 1.2,
+                      }}
+                      rowSpan={2}
+                    >
+                      収集運搬区間2
                     </td>
                     <td className="lbl">氏名又は名称</td>
-                    <td className="val" style={{ fontWeight: 700 }} colSpan={3}>
-                      {carrier2.name || '　'}
+                    <td className="val" style={{ fontWeight: 700 }} colSpan={5}>
+                      {carrier2 ? carrier2.name : '　'}
                     </td>
                   </tr>
+                  {/* 最終処分先 行2(処分場所) | 収集運搬区間2 行2(所在地) */}
                   <tr>
                     <td className="lbl" style={{ verticalAlign: 'middle' }}>処分場所</td>
-                    <td className="val" colSpan={3} style={{ lineHeight: 1.6, padding: '5px 6px', fontSize: '10px', verticalAlign: 'middle' }}>
-                      {finalDest ? `〒${finalDest.zip || ''}` : '　'}
-                      <br />{finalDest ? (finalDest.addr || '') : ''}
-                    </td>
-                    <td className="lbl" style={{ fontSize: '9px', textAlign: 'center' }}>電話</td>
-                    <td className="val">
-                      {finalDest ? (finalDest.tel || '') : '　'}
+                    <td
+                      className="val"
+                      colSpan={5}
+                      style={{ lineHeight: 1.6, padding: '5px 6px', fontSize: '10px', verticalAlign: 'middle' }}
+                    >
+                      {finalDest ? (
+                        <>
+                          〒{finalDest.zip || ''}　<span style={{ fontSize: '9px' }}>電話</span> {finalDest.tel || ''}
+                          <br />{finalDest.addr || ''}
+                        </>
+                      ) : '　'}
                     </td>
                     <td className="lbl" style={{ verticalAlign: 'middle' }}>所在地</td>
-                    <td className="val" colSpan={3} style={{ lineHeight: 1.6, padding: '5px 6px', fontSize: '10px', verticalAlign: 'middle' }}>
-                      〒{carrier2.zip || ''}　TEL {carrier2.tel || ''}
-                      <br />{carrier2.addr || ''}
+                    <td
+                      className="val"
+                      colSpan={5}
+                      style={{ lineHeight: 1.6, padding: '5px 6px', fontSize: '10px', verticalAlign: 'middle' }}
+                    >
+                      {carrier2 ? (
+                        <>
+                          〒{carrier2.zip || ''}　TEL {carrier2.tel || ''}
+                          <br />{carrier2.addr || ''}
+                        </>
+                      ) : '　'}
                     </td>
                   </tr>
                 </>
