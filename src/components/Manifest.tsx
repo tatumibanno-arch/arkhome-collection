@@ -42,7 +42,7 @@ export default function Manifest({ request, type }: ManifestProps) {
   const HELPERS = ['無', '要'];
 
   return (
-    <div className={`manifest ${isAsb ? 'manifest-asb' : 'manifest-none'}`}>
+    <div className={`manifest ${(carrier2 || finalDest) ? 'manifest-asb' : 'manifest-none'}`}>
       {/* タイトル行 */}
       <div className="mf-title-row">
         <div className="title">
