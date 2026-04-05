@@ -507,7 +507,12 @@ export default function Manifest({ request, type }: ManifestProps) {
                   style={{ lineHeight: 1.6, padding: '5px 6px', fontSize: '10px', verticalAlign: 'middle' }}
                 >
                   {transfer
-                    ? `〒${transfer.zip || ''}　TEL ${transfer.tel || ''}\n${transfer.addr || ''}`
+                    ? (
+                      <>
+                        〒{transfer.zip || ''}　TEL {transfer.tel || ''}
+                        <br />{transfer.addr || ''}
+                      </>
+                    )
                     : '＊＊＊＊＊＊＊＊＊＊＊'}
                 </td>
               </tr>
