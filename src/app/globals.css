@@ -1453,7 +1453,7 @@ table.mf th {
 
 .sign-cell {
   padding: 8px 12px;
-  min-height: 50px;
+  min-height: 55px;
   border-right: 1px solid #ddd;
 }
 
@@ -1580,13 +1580,24 @@ table.mf th {
   }
 
   .manifest .sign-cell {
-    padding: 3px 8px;
-    min-height: 30px;
+    padding: 5px 8px;
+    min-height: 38px;
   }
 
   .manifest .sign-cell .sign-lbl {
     font-size: 8px;
     margin-bottom: 1px;
+  }
+
+  /* 石綿なし：行が少ないのでセルを広げてA4を埋める */
+  .manifest-none table.mf td,
+  .manifest-none table.mf th {
+    padding: 4px 5px;
+    line-height: 1.5;
+  }
+
+  .manifest-none .sign-cell {
+    min-height: 55px;
   }
 
   .manifest .fax-footer {
