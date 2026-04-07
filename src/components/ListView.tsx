@@ -45,6 +45,7 @@ export default function ListView({
             <th>店舗</th>
             <th>お客様名</th>
             <th>住所</th>
+            <th>依頼日</th>
             <th>回収日</th>
             <th>担当業者</th>
             <th>石綿</th>
@@ -55,7 +56,7 @@ export default function ListView({
         <tbody>
           <tr>
             <td
-              colSpan={9}
+              colSpan={10}
               style={{ textAlign: 'center', padding: '24px', color: 'var(--tx3)' }}
             >
               該当する依頼がありません
@@ -74,6 +75,7 @@ export default function ListView({
           <th>店舗</th>
           <th>お客様名</th>
           <th>住所</th>
+          <th>依頼日</th>
           <th>回収日</th>
           <th>担当業者</th>
           <th>石綿</th>
@@ -100,6 +102,9 @@ export default function ListView({
             </td>
             <td style={{ color: 'var(--tx2)', fontSize: '12px' }}>
               {request.address}
+            </td>
+            <td style={{ whiteSpace: 'nowrap', fontSize: '12px', color: 'var(--tx2)' }}>
+              {new Date(request.created_at).toLocaleDateString('ja-JP')}
             </td>
             <td style={{ whiteSpace: 'nowrap', fontWeight: 600 }}>
               {request.collection_date}
