@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Request } from '@/types';
 import { getRequestById } from '@/lib/api';
@@ -126,6 +126,8 @@ function PrintContent() {
 
 export default function PrintPage() {
   return (
-    <PrintContent />
+    <Suspense fallback={<div style={{ padding: '48px', textAlign: 'center', color: '#999' }}>読み込み中...</div>}>
+      <PrintContent />
+    </Suspense>
   );
 }
