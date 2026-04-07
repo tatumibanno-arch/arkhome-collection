@@ -173,6 +173,7 @@ export async function getRouting(
       addr: v.address || '',
       fax: v.fax || '',
       contact: v.contact || '',
+      email: v.email || '',
     };
   };
 
@@ -209,6 +210,7 @@ function parseRouting(raw: string | RoutingInfo | null): RoutingInfo | null {
       addr: v.address || v.addr || '',     // vendors: address → VendorSnapshot: addr
       fax: v.fax || '',
       contact: v.contact || '',
+      email: v.email || '',
     };
   };
   return {
