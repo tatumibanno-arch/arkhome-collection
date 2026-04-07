@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Store, Vendor, Request, HelperType } from '@/types';
 import { getStores, getVendors, createRequest, getRouting, getEmailConfig } from '@/lib/api';
-import { generateTimeOptions, CAR_SIZES, toHanNum } from '@/lib/utils';
+import { generateTimeOptions, CAR_SIZES, toHanNum, formatPhone, formatZip, fetchAddressFromZip, isValidEmail, isPastDate } from '@/lib/utils';
 import { sendNotifications } from '@/lib/notifications';
 import { useToast } from './Toast';
 
@@ -62,6 +62,20 @@ export default function RequestForm({ onSubmitSuccess }: FormProps) {
     }
   };
 
+  // 郵便番号から住所自動入力
+  const handleZipChange = async (value: string) => {
+    const formatted = formatZip(value);
+    setZip(formatted);
+    const digits = formatted.replace(/[^\d]/g, '');
+    if (digits.length === 7) {
+      const addr = await fetchAddressFromZip(digits);
+      if (addr) {
+        setAddress(addr);
+        showToast(`住所を自動入力しました`);
+      }
+    }
+  };
+
   const validate = (): string[] => {
     const errs: string[] = [];
     if (!storeId) errs.push('店舗名');
@@ -70,9 +84,11 @@ export default function RequestForm({ onSubmitSuccess }: FormProps) {
     if (!staff) errs.push('店舗担当者名');
     if (!staffTel) errs.push('店舗担当者 連絡先');
     if (!email) errs.push('店舗担当者 メールアドレス');
+    if (email && !isValidEmail(email)) errs.push('メールアドレスの形式が正しくありません');
     if (!chief) errs.push('現場責任者名');
     if (!chiefTel) errs.push('現場責任者 連絡先');
     if (!collectionDate) errs.push('回収希望日');
+    if (collectionDate && isPastDate(collectionDate)) errs.push('回収希望日が過去の日付です');
     if (!hasAsbestos) errs.push('アスベスト含有');
     return errs;
   };
@@ -217,7 +233,7 @@ export default function RequestForm({ onSubmitSuccess }: FormProps) {
             <input
               type="text"
               value={staffTel}
-              onChange={(e) => setStaffTel(e.target.value)}
+              onChange={(e) => setStaffTel(formatPhone(e.target.value))}
               placeholder="070-6420-2434"
               className={errors.includes('店舗担当者 連絡先') ? 'err-field' : ''}
             />
@@ -231,7 +247,7 @@ export default function RequestForm({ onSubmitSuccess }: FormProps) {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="noguchi@arkhome.co.jp"
-              className={errors.includes('店舗担当者 メールアドレス') ? 'err-field' : ''}
+              className={errors.includes('店舗担当者 メールアドレス') || errors.includes('メールアドレスの形式が正しくありません') ? 'err-field' : ''}
             />
           </div>
         </div>
@@ -254,7 +270,7 @@ export default function RequestForm({ onSubmitSuccess }: FormProps) {
             <input
               type="text"
               value={zip}
-              onChange={(e) => setZip(e.target.value)}
+              onChange={(e) => handleZipChange(e.target.value)}
               placeholder="920-0000"
               maxLength={8}
             />
@@ -299,7 +315,7 @@ export default function RequestForm({ onSubmitSuccess }: FormProps) {
             <input
               type="text"
               value={chiefTel}
-              onChange={(e) => setChiefTel(e.target.value)}
+              onChange={(e) => setChiefTel(formatPhone(e.target.value))}
               placeholder="090-2487-1180"
               className={errors.includes('現場責任者 連絡先') ? 'err-field' : ''}
             />
@@ -315,7 +331,7 @@ export default function RequestForm({ onSubmitSuccess }: FormProps) {
               type="date"
               value={collectionDate}
               onChange={(e) => setCollectionDate(e.target.value)}
-              className={errors.includes('回収希望日') ? 'err-field' : ''}
+              className={errors.includes('回収希望日') || errors.includes('回収希望日が過去の日付です') ? 'err-field' : ''}
             />
           </div>
           <div className="fg">
