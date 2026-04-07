@@ -176,10 +176,9 @@ function MainContent() {
     setModalOpen(true);
   };
 
-  const handlePrintManifest = (request: Request) => {
-    setManifestRequest(request);
-    setManifestType('none');
-    setActiveTab('manifest');
+  const handlePrintManifest = (request: Request, type?: 'none' | 'asb') => {
+    const printType = type || 'none';
+    window.open(`/print?id=${request.id}&type=${printType}`, '_blank');
   };
 
   const handleExportCSV = () => {
