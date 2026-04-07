@@ -28,6 +28,8 @@ export default function RequestModal({
   const { showToast } = useToast();
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [showVendorEmail, setShowVendorEmail] = useState(false);
+  const [showStoreEmail, setShowStoreEmail] = useState(false);
   const timeOptions = generateTimeOptions();
 
   const [form, setForm] = useState({
@@ -386,12 +388,18 @@ export default function RequestModal({
               </button>
 
               <div className="eblk">
-                <div className="eblk-lbl">📧 業者への配車依頼メール<button onClick={() => handleCopy(vendorEmailText())}>コピー</button></div>
-                <pre className="et">{vendorEmailText()}</pre>
+                <div className="eblk-lbl" style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} onClick={() => setShowVendorEmail(!showVendorEmail)}>
+                  <span>{showVendorEmail ? '▼' : '▶'} 📧 業者への配車依頼メール</span>
+                  <button onClick={(e) => { e.stopPropagation(); handleCopy(vendorEmailText()); }}>コピー</button>
+                </div>
+                {showVendorEmail && <pre className="et">{vendorEmailText()}</pre>}
               </div>
               <div className="eblk" style={{ marginTop: '8px' }}>
-                <div className="eblk-lbl">📧 店舗への受付確認メール（{request.email}）<button onClick={() => handleCopy(storeEmailText())}>コピー</button></div>
-                <pre className="et">{storeEmailText()}</pre>
+                <div className="eblk-lbl" style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} onClick={() => setShowStoreEmail(!showStoreEmail)}>
+                  <span>{showStoreEmail ? '▼' : '▶'} 📧 店舗への受付確認メール（{request.email}）</span>
+                  <button onClick={(e) => { e.stopPropagation(); handleCopy(storeEmailText()); }}>コピー</button>
+                </div>
+                {showStoreEmail && <pre className="et">{storeEmailText()}</pre>}
               </div>
 
               <button className="prt-btn-blue" onClick={() => { onPrintManifest(request); onClose(); }}>📄 マニフェスト確認票を印刷</button>
