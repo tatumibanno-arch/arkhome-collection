@@ -76,6 +76,21 @@ export async function sendSlackNotification(req: Request, webhookUrl: string): P
           },
         ],
       },
+      {
+        type: 'actions',
+        elements: [
+          {
+            type: 'button',
+            text: {
+              type: 'plain_text',
+              text: '📋 依頼の詳細を開く',
+              emoji: true,
+            },
+            url: `https://arkhome-collection.vercel.app/?open=${req.id}`,
+            style: 'primary',
+          },
+        ],
+      },
     ],
   };
 
