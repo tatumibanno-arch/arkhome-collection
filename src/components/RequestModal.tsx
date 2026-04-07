@@ -171,16 +171,51 @@ export default function RequestModal({
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
-  const vendorEmailText = () => {
+  const vendorEmailSubject = () => {
+    return `【現場回収のご依頼】${request.collection_date} ${request.store_name}`;
+  };
+
+  const vendorEmailBody = () => {
     const rt = request.routing_none;
     if (!rt) return '（業者未設定）';
     const c = rt.carrier;
     if (!c) return '（業者未設定）';
-    return `件名: 【廃棄物回収のご依頼】${request.collection_date} ${request.store_name}\n\n${c.name} ご担当者様\n\nお世話になっております。共栄紙業株式会社でございます。\n\n下記のとおり廃棄物回収をご手配いただけますでしょうか。\n\n■ 依頼番号  : ${request.request_code}\n■ 依頼元店舗 : ${request.store_name}\n■ 依頼場所  : ${request.customer_name}（${request.address}）\n■ 回収日時  : ${request.collection_date}（${request.time_from}〜${request.time_to}）\n■ アスベスト : ${request.has_asbestos ? '有（' + request.vol_asbestos + '㎡）' : '無'}\n${request.car_size ? '■ 希望車両  : ' + request.car_size + '\n' : ''}${request.note ? '■ 備考    : ' + request.note + '\n' : ''}\n当日は現場回収依頼書（マニフェスト）をお持ちください。\nご確認のうえ、折り返しご連絡いただけますと幸いです。\n\n共栄紙業株式会社　TEL: 06-6437-0180`;
+    return `${c.name}${c.contact ? ' ' + c.contact : ''} ご担当者様\n\nお世話になっております。共栄紙業株式会社でございます。\n\n下記のとおり廃棄物回収をご手配いただけますでしょうか。\n\n■ 依頼番号  : ${request.request_code}\n■ 依頼元店舗 : ${request.store_name}\n■ 依頼場所  : ${request.customer_name}（${request.address}）\n■ 回収日時  : ${request.collection_date}（${request.time_from}〜${request.time_to}）\n■ アスベスト : ${request.has_asbestos ? '有（' + request.vol_asbestos + '㎡）' : '無'}\n${request.car_size ? '■ 希望車両  : ' + request.car_size + '\n' : ''}${request.note ? '■ 備考    : ' + request.note + '\n' : ''}\n当日は現場回収依頼書（マニフェスト）をお持ちください。\nご確認のうえ、日程の折り返しご連絡いただけますと幸いです。\n\n共栄紙業株式会社　TEL: 06-6437-0180`;
+  };
+
+  const vendorEmailText = () => {
+    return `件名: ${vendorEmailSubject()}\n\n${vendorEmailBody()}`;
+  };
+
+  const vendorEmailAddress = () => {
+    const rt = request.routing_none;
+    return rt?.carrier?.email || '';
+  };
+
+  const openVendorMail = () => {
+    const to = vendorEmailAddress();
+    const subject = encodeURIComponent(vendorEmailSubject());
+    const body = encodeURIComponent(vendorEmailBody());
+    window.open(`mailto:${to}?subject=${subject}&body=${body}`);
+  };
+
+  const storeEmailSubject = () => {
+    return `【受付完了】現場回収依頼 ${request.request_code}`;
+  };
+
+  const storeEmailBody = () => {
+    return `${request.store_name} ${request.staff} 様\n\nお世話になっております。共栄紙業株式会社でございます。\n下記のとおり現場回収依頼を受け付けました。\n配車が決まりましたら改めてご連絡いたします。\n\n■ 依頼番号  : ${request.request_code}\n■ 依頼場所  : ${request.customer_name}（${request.address}）\n■ 回収希望日 : ${request.collection_date}（${request.time_from}〜${request.time_to}）\n■ アスベスト : ${request.has_asbestos ? '有' : '無'}\n\nご不明点はお気軽にご連絡ください。\n\n共栄紙業株式会社　TEL: 06-6437-0180`;
   };
 
   const storeEmailText = () => {
-    return `件名: 【受付完了】現場回収依頼 ${request.request_code}\n\n${request.store_name} ${request.staff} 様\n\nお世話になっております。共栄紙業株式会社でございます。\n下記のとおり現場回収依頼を受け付けました。\n配車が決まりましたら改めてご連絡いたします。\n\n■ 依頼番号  : ${request.request_code}\n■ 依頼場所  : ${request.customer_name}（${request.address}）\n■ 回収希望日 : ${request.collection_date}（${request.time_from}〜${request.time_to}）\n■ アスベスト : ${request.has_asbestos ? '有' : '無'}\n\nご不明点はお気軽にご連絡ください。\n\n共栄紙業株式会社　TEL: 06-6437-0180`;
+    return `件名: ${storeEmailSubject()}\n\n${storeEmailBody()}`;
+  };
+
+  const openStoreMail = () => {
+    const to = request.email || '';
+    const subject = encodeURIComponent(storeEmailSubject());
+    const body = encodeURIComponent(storeEmailBody());
+    window.open(`mailto:${to}?subject=${subject}&body=${body}`);
   };
 
   const inputStyle: React.CSSProperties = {
@@ -390,14 +425,20 @@ export default function RequestModal({
               <div className="eblk">
                 <div className="eblk-lbl" style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} onClick={() => setShowVendorEmail(!showVendorEmail)}>
                   <span>{showVendorEmail ? '▼' : '▶'} 📧 業者への配車依頼メール</span>
-                  <button onClick={(e) => { e.stopPropagation(); handleCopy(vendorEmailText()); }}>コピー</button>
+                  <div style={{ display: 'flex', gap: '4px' }}>
+                    <button onClick={(e) => { e.stopPropagation(); openVendorMail(); }} style={{ background: 'var(--bl)', color: '#fff', border: 'none', borderRadius: '4px', padding: '2px 8px', fontSize: '11px', cursor: 'pointer' }}>メール作成</button>
+                    <button onClick={(e) => { e.stopPropagation(); handleCopy(vendorEmailText()); }}>コピー</button>
+                  </div>
                 </div>
                 {showVendorEmail && <pre className="et">{vendorEmailText()}</pre>}
               </div>
               <div className="eblk" style={{ marginTop: '8px' }}>
                 <div className="eblk-lbl" style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} onClick={() => setShowStoreEmail(!showStoreEmail)}>
                   <span>{showStoreEmail ? '▼' : '▶'} 📧 店舗への受付確認メール（{request.email}）</span>
-                  <button onClick={(e) => { e.stopPropagation(); handleCopy(storeEmailText()); }}>コピー</button>
+                  <div style={{ display: 'flex', gap: '4px' }}>
+                    <button onClick={(e) => { e.stopPropagation(); openStoreMail(); }} style={{ background: 'var(--bl)', color: '#fff', border: 'none', borderRadius: '4px', padding: '2px 8px', fontSize: '11px', cursor: 'pointer' }}>メール作成</button>
+                    <button onClick={(e) => { e.stopPropagation(); handleCopy(storeEmailText()); }}>コピー</button>
+                  </div>
                 </div>
                 {showStoreEmail && <pre className="et">{storeEmailText()}</pre>}
               </div>
