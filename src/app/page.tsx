@@ -62,6 +62,24 @@ function MainContent() {
     loadData();
   }, [loadData]);
 
+  // URLパラメータ ?open=xxx で自動モーダル表示
+  useEffect(() => {
+    if (requests.length > 0 && !loading) {
+      const params = new URLSearchParams(window.location.search);
+      const openId = params.get('open');
+      if (openId) {
+        const target = requests.find((r) => r.id === openId);
+        if (target) {
+          setSelectedRequest(target);
+          setModalOpen(true);
+          setActiveTab('kanban');
+          // URLからパラメータを消す（再読み込み時に再度開かないように）
+          window.history.replaceState({}, '', '/');
+        }
+      }
+    }
+  }, [requests, loading]);
+
   // フィルタリング
   const getFilteredRequests = useCallback(() => {
     let filtered = [...requests];
