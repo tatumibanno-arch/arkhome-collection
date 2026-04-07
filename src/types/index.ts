@@ -23,6 +23,7 @@ export interface Vendor {
   jwnet_no: string | null;
   jwnet_pw: string | null;
   contact: string | null;
+  email: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -73,6 +74,7 @@ export interface VendorSnapshot {
   addr: string;
   fax: string;
   contact: string;
+  email: string;
 }
 
 // 回収依頼
