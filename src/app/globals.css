@@ -1511,7 +1511,8 @@ table.mf th {
   .toast,
   .tabs,
   .brand,
-  .prt-btn {
+  .prt-btn,
+  .print-header {
     display: none !important;
   }
 
