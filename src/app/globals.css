@@ -1623,25 +1623,30 @@ table.mf th {
     padding: 3px 6px;
   }
 
-  /* 石綿あり：コンパクトに収める */
+  /* 石綿あり：A4に合わせてセルを広げる */
   .manifest-asb table.mf td,
   .manifest-asb table.mf th {
-    padding: 3px 3px;
-    font-size: 8px;
-    line-height: 1.4;
+    padding: 4px 3px;
+    font-size: 8.5px;
+    line-height: 1.5;
   }
 
   .manifest-asb .lbl {
-    font-size: 7.5px;
-  }
-
-  .manifest-asb .val {
     font-size: 8px;
   }
 
+  .manifest-asb .val {
+    font-size: 8.5px;
+  }
+
   .manifest-asb .sign-cell {
-    min-height: 55px;
+    min-height: 70px;
+    padding: 6px 10px;
+  }
+
+  .manifest-asb .fax-cell {
     padding: 5px 8px;
+    font-size: 9px;
   }
 
   /* 印刷時にセル内テキストがはみ出さないようにする */
