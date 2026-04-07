@@ -515,6 +515,7 @@ function MainContent() {
         onStatusChange={handleStatusChange}
         onDelete={handleDelete}
         onPrintManifest={handlePrintManifest}
+        onUpdated={loadData}
       />
     </>
   );
