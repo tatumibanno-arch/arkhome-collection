@@ -11,9 +11,8 @@ export function initEmailJS(publicKey: string) {
   }
 }
 
-// Slack Webhook通知
-export async function sendSlackNotification(req: Request): Promise<boolean> {
-  const webhookUrl = process.env.NEXT_PUBLIC_SLACK_WEBHOOK_URL;
+// Slack Webhook通知（API Route経由でCORS回避）
+export async function sendSlackNotification(req: Request, webhookUrl: string): Promise<boolean> {
   if (!webhookUrl) return false;
 
   const rt = req.routing_none;
@@ -81,10 +80,10 @@ export async function sendSlackNotification(req: Request): Promise<boolean> {
   };
 
   try {
-    const response = await fetch(webhookUrl, {
+    const response = await fetch('/api/slack', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(message),
+      body: JSON.stringify({ webhookUrl, message }),
     });
     return response.ok;
   } catch (error) {
@@ -192,12 +191,15 @@ export async function sendNotifications(
     serviceId: string | null;
     templateId: string | null;
     publicKey: string | null;
+    slackWebhookUrl: string | null;
   }
 ): Promise<{ slack: boolean; email: boolean }> {
   const results = { slack: false, email: false };
 
   // Slack通知
-  results.slack = await sendSlackNotification(req);
+  if (emailConfig.slackWebhookUrl) {
+    results.slack = await sendSlackNotification(req, emailConfig.slackWebhookUrl);
+  }
 
   // Email通知
   if (emailConfig.sharedEmail) {
