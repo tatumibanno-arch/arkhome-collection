@@ -132,6 +132,7 @@ export default function RequestForm({ onSubmitSuccess }: FormProps) {
           serviceId: emailConfig.emailjs_service_id,
           templateId: emailConfig.emailjs_template_id,
           publicKey: emailConfig.emailjs_public_key,
+          slackWebhookUrl: emailConfig.slack_webhook_url,
         });
       }
 
