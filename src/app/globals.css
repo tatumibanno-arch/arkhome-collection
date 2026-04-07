@@ -1592,12 +1592,27 @@ table.mf th {
   /* 石綿なし：行が少ないのでセルを広げてA4を埋める */
   .manifest-none table.mf td,
   .manifest-none table.mf th {
-    padding: 5px 5px;
-    line-height: 1.7;
+    padding: 6px 5px;
+    line-height: 1.8;
+    font-size: 9.5px;
+  }
+
+  .manifest-none .mf-title-row {
+    padding: 5px 10px;
+  }
+
+  .manifest-none .mf-title-row .title {
+    font-size: 12px;
   }
 
   .manifest-none .sign-cell {
-    min-height: 80px;
+    min-height: 90px;
+    padding: 8px 10px;
+  }
+
+  .manifest-none .fax-cell {
+    padding: 5px 8px;
+    font-size: 9px;
   }
 
   .manifest .fax-footer {
