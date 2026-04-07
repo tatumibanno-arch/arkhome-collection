@@ -177,8 +177,18 @@ function MainContent() {
   };
 
   const handlePrintManifest = (request: Request, type?: 'none' | 'asb') => {
-    const printType = type || 'none';
-    window.open(`/print?id=${request.id}&type=${printType}`, '_blank');
+    if (type) {
+      // 特定のタイプが指定された場合はそれだけ開く
+      window.open(`/print?id=${request.id}&type=${type}`, '_blank');
+    } else {
+      // タイプ未指定：石綿なしを開く＋アスベストありなら石綿ありも開く
+      window.open(`/print?id=${request.id}&type=none`, '_blank');
+      if (request.has_asbestos) {
+        setTimeout(() => {
+          window.open(`/print?id=${request.id}&type=asb`, '_blank');
+        }, 300);
+      }
+    }
   };
 
   const handleExportCSV = () => {
