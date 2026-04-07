@@ -1623,6 +1623,27 @@ table.mf th {
     padding: 3px 6px;
   }
 
+  /* 石綿あり：コンパクトに収める */
+  .manifest-asb table.mf td,
+  .manifest-asb table.mf th {
+    padding: 3px 3px;
+    font-size: 8px;
+    line-height: 1.4;
+  }
+
+  .manifest-asb .lbl {
+    font-size: 7.5px;
+  }
+
+  .manifest-asb .val {
+    font-size: 8px;
+  }
+
+  .manifest-asb .sign-cell {
+    min-height: 55px;
+    padding: 5px 8px;
+  }
+
   /* 印刷時にセル内テキストがはみ出さないようにする */
   .manifest td,
   .manifest th {
