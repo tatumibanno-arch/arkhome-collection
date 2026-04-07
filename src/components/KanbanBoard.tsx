@@ -66,7 +66,10 @@ export default function KanbanBoard({
                       {request.has_asbestos && <span className="asb-tag">石綿</span>}
                     </div>
                     <div className="kc-mt">
+                      <span>🕐 {new Date(request.created_at).toLocaleDateString('ja-JP')}</span>
                       <span>📅 {request.collection_date}</span>
+                    </div>
+                    <div className="kc-mt">
                       <span>
                         📍 {request.address.slice(0, 15)}
                         {request.address.length > 15 ? '…' : ''}
