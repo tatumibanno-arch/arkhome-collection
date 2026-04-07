@@ -273,6 +273,24 @@ export async function updateRequestStatus(id: string, status: RequestStatus): Pr
   return data;
 }
 
+export async function updateRequest(
+  id: string,
+  updates: Partial<Omit<Request, 'id' | 'request_code' | 'created_at' | 'updated_at'>>
+): Promise<Request> {
+  const { data, error } = await supabase
+    .from('requests')
+    .update(updates)
+    .eq('id', id)
+    .select()
+    .single();
+  if (error) throw error;
+  return {
+    ...data,
+    routing_none: parseRouting(data.routing_none),
+    routing_asb: parseRouting(data.routing_asb),
+  };
+}
+
 export async function deleteRequest(id: string): Promise<void> {
   const { error } = await supabase.from('requests').delete().eq('id', id);
   if (error) throw error;
