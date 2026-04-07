@@ -49,6 +49,7 @@ export default function Settings() {
     jwnet_no: '',
     jwnet_pw: '',
     contact: '',
+    email: '',
   });
 
   const [mappingModalOpen, setMappingModalOpen] = useState(false);
@@ -125,6 +126,7 @@ export default function Settings() {
         jwnet_no: vendor.jwnet_no || '',
         jwnet_pw: vendor.jwnet_pw || '',
         contact: vendor.contact || '',
+        email: vendor.email || '',
       });
     } else {
       setEditingVendor(null);
@@ -137,6 +139,7 @@ export default function Settings() {
         jwnet_no: '',
         jwnet_pw: '',
         contact: '',
+    email: '',
       });
     }
     setVendorModalOpen(true);
@@ -650,6 +653,17 @@ export default function Settings() {
                 onChange={(e) =>
                   setVendorForm({ ...vendorForm, contact: e.target.value })
                 }
+              />
+            </div>
+            <div className="fg full">
+              <label>メールアドレス</label>
+              <input
+                type="email"
+                value={vendorForm.email}
+                onChange={(e) =>
+                  setVendorForm({ ...vendorForm, email: e.target.value })
+                }
+                placeholder="example@company.co.jp"
               />
             </div>
             <div className="fg full">
