@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Store, Vendor, Request, HelperType } from '@/types';
 import { getStores, getVendors, createRequest, getRouting, getEmailConfig } from '@/lib/api';
 import { generateTimeOptions, CAR_SIZES, toHanNum, formatPhone, formatZip, fetchAddressFromZip, isValidEmail, isPastDate } from '@/lib/utils';
@@ -17,6 +17,7 @@ export default function RequestForm({ onSubmitSuccess }: FormProps) {
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
+  const composingRef = useRef(false);
 
   // Form State
   const [storeId, setStoreId] = useState('');
@@ -233,7 +234,9 @@ export default function RequestForm({ onSubmitSuccess }: FormProps) {
             <input
               type="text"
               value={staffTel}
-              onChange={(e) => setStaffTel(formatPhone(e.target.value))}
+              onChange={(e) => { if (!composingRef.current) setStaffTel(formatPhone(e.target.value)); else setStaffTel(e.target.value); }}
+              onCompositionStart={() => { composingRef.current = true; }}
+              onCompositionEnd={(e) => { composingRef.current = false; setStaffTel(formatPhone((e.target as HTMLInputElement).value)); }}
               placeholder="070-6420-2434"
               className={errors.includes('店舗担当者 連絡先') ? 'err-field' : ''}
             />
@@ -270,7 +273,9 @@ export default function RequestForm({ onSubmitSuccess }: FormProps) {
             <input
               type="text"
               value={zip}
-              onChange={(e) => handleZipChange(e.target.value)}
+              onChange={(e) => { if (!composingRef.current) handleZipChange(e.target.value); else setZip(e.target.value); }}
+              onCompositionStart={() => { composingRef.current = true; }}
+              onCompositionEnd={(e) => { composingRef.current = false; handleZipChange((e.target as HTMLInputElement).value); }}
               placeholder="920-0000"
               maxLength={8}
             />
@@ -315,7 +320,9 @@ export default function RequestForm({ onSubmitSuccess }: FormProps) {
             <input
               type="text"
               value={chiefTel}
-              onChange={(e) => setChiefTel(formatPhone(e.target.value))}
+              onChange={(e) => { if (!composingRef.current) setChiefTel(formatPhone(e.target.value)); else setChiefTel(e.target.value); }}
+              onCompositionStart={() => { composingRef.current = true; }}
+              onCompositionEnd={(e) => { composingRef.current = false; setChiefTel(formatPhone((e.target as HTMLInputElement).value)); }}
               placeholder="090-2487-1180"
               className={errors.includes('現場責任者 連絡先') ? 'err-field' : ''}
             />
