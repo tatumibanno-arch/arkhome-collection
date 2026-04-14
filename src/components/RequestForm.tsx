@@ -3,9 +3,26 @@
 import { useState, useEffect, useRef } from 'react';
 import { Store, Vendor, Request, HelperType } from '@/types';
 import { getStores, getVendors, createRequest, getRouting, getEmailConfig } from '@/lib/api';
-import { generateTimeOptions, CAR_SIZES, toHanNum, formatPhone, formatZip, fetchAddressFromZip, isValidEmail, isPastDate } from '@/lib/utils';
+import { generateTimeOptions, CAR_SIZES, toHanNum, formatPhone, formatZip, fetchAddressFromZip, isValidEmail } from '@/lib/utils';
 import { sendNotifications } from '@/lib/notifications';
 import { useToast } from './Toast';
+
+// 3日後以降かチェック
+function isTooSoon(dateStr: string): boolean {
+  if (!dateStr) return false;
+  const minDate = new Date();
+  minDate.setDate(minDate.getDate() + 3);
+  minDate.setHours(0, 0, 0, 0);
+  const target = new Date(dateStr);
+  return target < minDate;
+}
+
+// 3日後の日付文字列（input[type=date]のmin用）
+function getMinDate(): string {
+  const d = new Date();
+  d.setDate(d.getDate() + 3);
+  return d.toISOString().split('T')[0];
+}
 
 interface FormProps {
   onSubmitSuccess?: (request: Request) => void;
@@ -96,7 +113,7 @@ export default function RequestForm({ onSubmitSuccess, showMemo = false, showCon
     if (!chief) errs.push('現場責任者名');
     if (!chiefTel) errs.push('現場責任者 連絡先');
     if (!collectionDate) errs.push('回収希望日');
-    if (collectionDate && isPastDate(collectionDate)) errs.push('回収希望日が過去の日付です');
+    if (collectionDate && isTooSoon(collectionDate)) errs.push('回収希望日は3日後以降を指定してください');
     if (!hasAsbestos) errs.push('アスベスト含有');
     return errs;
   };
@@ -451,12 +468,20 @@ export default function RequestForm({ onSubmitSuccess, showMemo = false, showCon
           <div className="fg">
             <label>回収希望日<span className="r">*</span></label>
             <input type="date" value={collectionDate} onChange={(e) => setCollectionDate(e.target.value)}
-              className={errors.includes('回収希望日') || errors.includes('回収希望日が過去の日付です') ? 'err-field' : ''} />
+              min={getMinDate()}
+              className={errors.includes('回収希望日') || errors.includes('回収希望日は3日後以降を指定してください') ? 'err-field' : ''} />
           </div>
           <div className="fg">
             <label>回収希望時間帯</label>
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-              <select value={timeFrom} onChange={(e) => setTimeFrom(e.target.value)} style={{ flex: 1 }}>
+              <select value={timeFrom} onChange={(e) => {
+                  setTimeFrom(e.target.value);
+                  const hour = parseInt(e.target.value.split(':')[0]);
+                  const nextHour = hour + 1;
+                  if (nextHour <= 23) {
+                    setTimeTo(`${String(nextHour).padStart(2, '0')}:00`);
+                  }
+                }} style={{ flex: 1 }}>
                 {timeOptions.map((t) => (<option key={t} value={t}>{t}</option>))}
               </select>
               <span style={{ color: 'var(--tx3)' }}>〜</span>
