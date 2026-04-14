@@ -28,7 +28,7 @@ function MainContent() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [storeFilter, setStoreFilter] = useState('all');
-  const [sortOrder, setSortOrder] = useState('created');
+  const [sortOrder, setSortOrder] = useState('date_asc');
 
   // モーダル
   const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
@@ -40,7 +40,7 @@ function MainContent() {
   const [manifestSearch, setManifestSearch] = useState('');
   const [manifestStatusFilter, setManifestStatusFilter] = useState('all');
   const [manifestStoreFilter, setManifestStoreFilter] = useState('all');
-  const [manifestSort, setManifestSort] = useState('created');
+  const [manifestSort, setManifestSort] = useState('date_asc');
 
   const loadData = useCallback(async () => {
     try {
@@ -163,14 +163,14 @@ function MainContent() {
           status === '0'
             ? '依頼受付'
             : status === '1'
-            ? '配車手配中'
-            : status === '2'
-            ? '配車完了'
-            : status === '3'
-            ? '回収済み'
-            : status === '4'
-            ? '請求書発行'
-            : '完了'
+              ? '配車手配中'
+              : status === '2'
+                ? '配車完了'
+                : status === '3'
+                  ? '回収済み'
+                  : status === '4'
+                    ? '請求書発行'
+                    : '完了'
         }`
       );
       loadData();
@@ -223,14 +223,14 @@ function MainContent() {
         r.status === '0'
           ? '依頼受付'
           : r.status === '1'
-          ? '配車手配中'
-          : r.status === '2'
-          ? '配車完了'
-          : r.status === '3'
-          ? '回収済み'
-          : r.status === '4'
-          ? '請求書発行'
-          : '完了',
+            ? '配車手配中'
+            : r.status === '2'
+              ? '配車完了'
+              : r.status === '3'
+                ? '回収済み'
+                : r.status === '4'
+                  ? '請求書発行'
+                  : '完了',
       店舗名: r.store_name,
       お客様名: r.customer_name,
       郵便番号: r.zip || '',
@@ -256,6 +256,7 @@ function MainContent() {
       処分業者: r.routing_none?.processor?.name || '',
       運搬先事業所: r.routing_none?.dest?.name || '',
       備考: r.note || '',
+      社内メモ: r.memo || '',
     }));
 
     const filename = `arkhome_回収実績_${new Date().toISOString().slice(0, 10)}.csv`;
@@ -311,7 +312,7 @@ function MainContent() {
 
       {/* フォームタブ */}
       <div className={`page ${activeTab === 'form' ? 'on' : ''}`}>
-        <RequestForm onSubmitSuccess={() => loadData()} />
+        <RequestForm onSubmitSuccess={() => loadData()} showMemo={true} />
       </div>
 
       {/* 管理ボードタブ */}
@@ -360,9 +361,9 @@ function MainContent() {
               value={sortOrder}
               onChange={(e) => setSortOrder(e.target.value)}
             >
-              <option value="created">受付順</option>
               <option value="date_asc">回収日 昇順</option>
               <option value="date_desc">回収日 降順</option>
+              <option value="created">受付順</option>
             </select>
             <button
               className={`view-btn ${viewType === 'kanban' ? 'on' : ''}`}
@@ -464,9 +465,9 @@ function MainContent() {
               value={manifestSort}
               onChange={(e) => setManifestSort(e.target.value)}
             >
-              <option value="created">受付順</option>
               <option value="date_asc">回収日 昇順</option>
               <option value="date_desc">回収日 降順</option>
+              <option value="created">受付順</option>
             </select>
             <select
               value={manifestRequest?.id || ''}
@@ -517,7 +518,6 @@ function MainContent() {
               )}
             </div>
           )}
-
           <div id="mf-area">
             {manifestRequest ? (
               <Manifest request={manifestRequest} type={manifestType} />
