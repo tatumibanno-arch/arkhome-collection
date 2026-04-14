@@ -75,6 +75,37 @@ export default function KanbanBoard({
                         {request.address.length > 15 ? '…' : ''}
                       </span>
                     </div>
+                    {/* 備考・メモありタグ */}
+                    {(request.note || request.memo) && (
+                      <div style={{ display: 'flex', gap: '4px', marginTop: '4px', flexWrap: 'wrap' }}>
+                        {request.note && (
+                          <span style={{
+                            fontSize: '9px',
+                            fontWeight: 700,
+                            padding: '1px 5px',
+                            borderRadius: '4px',
+                            background: 'var(--sur2)',
+                            color: 'var(--tx3)',
+                            border: '1px solid var(--bdr)',
+                          }}>
+                            📌備考あり
+                          </span>
+                        )}
+                        {request.memo && (
+                          <span style={{
+                            fontSize: '9px',
+                            fontWeight: 700,
+                            padding: '1px 5px',
+                            borderRadius: '4px',
+                            background: 'var(--ambl)',
+                            color: 'var(--amb)',
+                            border: '1px solid var(--amb)',
+                          }}>
+                            📝メモあり
+                          </span>
+                        )}
+                      </div>
+                    )}
                     <div className="kc-ac">
                       <button
                         className="kb-btn"
