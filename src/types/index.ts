@@ -104,6 +104,7 @@ export interface Request {
   has_asbestos: boolean;
   vol_asbestos: number;
   note: string | null;
+  memo: string | null;
   status: RequestStatus;
   routing_none: RoutingInfo | null;
   routing_asb: RoutingInfo | null;
