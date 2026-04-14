@@ -12,7 +12,7 @@ interface RequestModalProps {
   onClose: () => void;
   onStatusChange: (id: string, status: RequestStatus) => void;
   onDelete: (id: string) => void;
-  onPrintManifest: (request: Request) => void;
+  onPrintManifest: (request: Request, type?: 'none' | 'asb') => void;
   onUpdated?: () => void;
 }
 
@@ -30,6 +30,7 @@ export default function RequestModal({
   const [saving, setSaving] = useState(false);
   const [showVendorEmail, setShowVendorEmail] = useState(false);
   const [showStoreEmail, setShowStoreEmail] = useState(false);
+
   const timeOptions = generateTimeOptions();
 
   const [form, setForm] = useState({
@@ -54,6 +55,7 @@ export default function RequestModal({
     has_asbestos: false,
     vol_asbestos: 0,
     note: '',
+    memo: '',
   });
 
   useEffect(() => {
@@ -80,6 +82,7 @@ export default function RequestModal({
         has_asbestos: request.has_asbestos,
         vol_asbestos: request.vol_asbestos,
         note: request.note || '',
+        memo: request.memo || '',
       });
       setEditing(false);
     }
@@ -154,6 +157,7 @@ export default function RequestModal({
         has_asbestos: form.has_asbestos,
         vol_asbestos: form.vol_asbestos,
         note: form.note || null,
+        memo: form.memo || null,
       });
       showToast('依頼内容を更新しました');
       setEditing(false);
@@ -180,7 +184,8 @@ export default function RequestModal({
     if (!rt) return '（業者未設定）';
     const c = rt.carrier;
     if (!c) return '（業者未設定）';
-    return `${c.name}${c.contact ? ' ' + c.contact : ''} ご担当者様\n\nお世話になっております。共栄紙業株式会社でございます。\n\n下記のとおり廃棄物回収をご手配いただけますでしょうか。\n\n■ 依頼番号  : ${request.request_code}\n■ 依頼元店舗 : ${request.store_name}\n■ 依頼場所  : ${request.customer_name}（${request.address}）\n■ 回収日時  : ${request.collection_date}（${request.time_from}〜${request.time_to}）\n■ アスベスト : ${request.has_asbestos ? '有（' + request.vol_asbestos + '㎡）' : '無'}\n${request.car_size ? '■ 希望車両  : ' + request.car_size + '\n' : ''}${request.note ? '■ 備考    : ' + request.note + '\n' : ''}\n当日は現場回収依頼書（マニフェスト）をお持ちください。\nご確認のうえ、日程の折り返しご連絡いただけますと幸いです。\n\n共栄紙業株式会社　TEL: 06-6437-0180`;
+
+    return `${c.name}${c.contact ? ' ' + c.contact : ''} ご担当者様\n\nお世話になっております。共栄紙業株式会社でございます。\n\n下記のとおり廃棄物回収をご手配いただけますでしょうか。\n\n■ 依頼番号 : ${request.request_code}\n■ 依頼元店舗 : ${request.store_name}\n■ 依頼場所 : ${request.customer_name}（${request.address}）\n■ 回収日時 : ${request.collection_date}（${request.time_from}〜${request.time_to}）\n■ アスベスト : ${request.has_asbestos ? '有（' + request.vol_asbestos + '㎡）' : '無'}\n${request.car_size ? '■ 希望車両 : ' + request.car_size + '\n' : ''}${request.note ? '■ 備考 : ' + request.note + '\n' : ''}\n当日は現場回収依頼書（マニフェスト）をお持ちください。\nご確認のうえ、日程の折り返しご連絡いただけますと幸いです。\n\n共栄紙業株式会社 TEL: 06-6437-0180`;
   };
 
   const vendorEmailText = () => {
@@ -204,7 +209,7 @@ export default function RequestModal({
   };
 
   const storeEmailBody = () => {
-    return `${request.store_name} ${request.staff} 様\n\nお世話になっております。共栄紙業株式会社でございます。\n下記のとおり現場回収依頼を受け付けました。\n配車が決まりましたら改めてご連絡いたします。\n\n■ 依頼番号  : ${request.request_code}\n■ 依頼場所  : ${request.customer_name}（${request.address}）\n■ 回収希望日 : ${request.collection_date}（${request.time_from}〜${request.time_to}）\n■ アスベスト : ${request.has_asbestos ? '有' : '無'}\n\nご不明点はお気軽にご連絡ください。\n\n共栄紙業株式会社　TEL: 06-6437-0180`;
+    return `${request.store_name} ${request.staff} 様\n\nお世話になっております。共栄紙業株式会社でございます。\n下記のとおり現場回収依頼を受け付けました。\n配車が決まりましたら改めてご連絡いたします。\n\n■ 依頼番号 : ${request.request_code}\n■ 依頼場所 : ${request.customer_name}（${request.address}）\n■ 回収希望日 : ${request.collection_date}（${request.time_from}〜${request.time_to}）\n■ アスベスト : ${request.has_asbestos ? '有' : '無'}\n\nご不明点はお気軽にご連絡ください。\n\n共栄紙業株式会社 TEL: 06-6437-0180`;
   };
 
   const storeEmailText = () => {
@@ -391,6 +396,11 @@ export default function RequestModal({
                 <textarea style={{ ...inputStyle, minHeight: '60px', resize: 'vertical' }} value={form.note} onChange={(e) => updateForm('note', e.target.value)} />
               </div>
 
+              <div style={fullRowStyle}>
+                <label style={labelStyle}>社内メモ <span style={{ fontWeight: 400, fontSize: '10px', color: 'var(--tx3)' }}>（マニフェストには印刷されません）</span></label>
+                <textarea style={{ ...inputStyle, minHeight: '60px', resize: 'vertical' }} value={form.memo} onChange={(e) => updateForm('memo', e.target.value)} placeholder="社内共有用のメモ・連絡事項など" />
+              </div>
+
               <div style={{ display: 'flex', gap: '8px', marginTop: '14px' }}>
                 <button onClick={handleSave} disabled={saving} style={{ flex: 1, padding: '10px', background: 'var(--g)', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '14px', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
                   {saving ? '保存中...' : '✓ 保存'}
@@ -413,6 +423,14 @@ export default function RequestModal({
                 <div className="di"><label>施工業者</label><div className="v">{request.builder || '—'}</div></div>
               </div>
 
+              {/* 社内メモ表示 */}
+              {request.memo && (
+                <div style={{ background: 'var(--ambl)', border: '1px solid var(--amb)', borderRadius: '8px', padding: '10px 14px', marginBottom: '12px', fontSize: '12px', lineHeight: 1.7 }}>
+                  <div style={{ fontSize: '10px', fontWeight: 700, color: 'var(--amb)', marginBottom: '4px' }}>📝 社内メモ</div>
+                  <div style={{ color: 'var(--tx)', whiteSpace: 'pre-wrap' }}>{request.memo}</div>
+                </div>
+              )}
+
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
                 <span className="sb" style={{ background: STATUS_BG[request.status], color: STATUS_FG[request.status] }}>{STATUSES[request.status]}</span>
                 <span style={{ fontSize: '11px', color: 'var(--tx3)' }}>{request.routing_none ? '運搬: ' + request.routing_none.carrier?.name : '—'}</span>
@@ -432,6 +450,7 @@ export default function RequestModal({
                 </div>
                 {showVendorEmail && <pre className="et">{vendorEmailText()}</pre>}
               </div>
+
               <div className="eblk" style={{ marginTop: '8px' }}>
                 <div className="eblk-lbl" style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} onClick={() => setShowStoreEmail(!showStoreEmail)}>
                   <span>{showStoreEmail ? '▼' : '▶'} 📧 店舗への受付確認メール（{request.email}）</span>
@@ -443,7 +462,26 @@ export default function RequestModal({
                 {showStoreEmail && <pre className="et">{storeEmailText()}</pre>}
               </div>
 
-              <button className="prt-btn-blue" onClick={() => { onPrintManifest(request); onClose(); }}>📄 マニフェスト確認票を印刷</button>
+              {/* マニフェスト印刷ボタン — 石綿なし/ありをそれぞれ選べるように */}
+              <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
+                <button
+                  className="prt-btn-blue"
+                  style={{ flex: 1 }}
+                  onClick={() => { onPrintManifest(request, 'none'); onClose(); }}
+                >
+                  📄 石綿なし マニフェスト印刷
+                </button>
+                {request.has_asbestos && (
+                  <button
+                    className="prt-btn-blue"
+                    style={{ flex: 1, background: 'var(--rd)' }}
+                    onClick={() => { onPrintManifest(request, 'asb'); onClose(); }}
+                  >
+                    📄 石綿あり マニフェスト印刷
+                  </button>
+                )}
+              </div>
+
               {parseInt(request.status) > 0 && (<button className="bk-btn" onClick={handleBackward}>◀ {STATUSES[String(parseInt(request.status) - 1) as RequestStatus]} に戻す</button>)}
               {parseInt(request.status) < 5 && (<button className="fwd-btn" onClick={handleForward}>▶ {STATUSES[String(parseInt(request.status) + 1) as RequestStatus]} へ進める</button>)}
               <button className="del-btn" onClick={handleDelete}>この依頼を削除</button>
