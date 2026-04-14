@@ -11,10 +11,8 @@ export function initEmailJS(publicKey: string) {
   }
 }
 
-// Slack Webhook通知（API Route経由でCORS回避）
-export async function sendSlackNotification(req: Request, webhookUrl: string): Promise<boolean> {
-  if (!webhookUrl) return false;
-
+// Slack Webhook通知（API Route経由 — Webhook URLはサーバー側で管理）
+export async function sendSlackNotification(req: Request): Promise<boolean> {
   const rt = req.routing_none;
   const carrierName = rt?.carrier?.name || '未設定';
 
@@ -98,7 +96,7 @@ export async function sendSlackNotification(req: Request, webhookUrl: string): P
     const response = await fetch('/api/slack', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ webhookUrl, message }),
+      body: JSON.stringify({ message }),
     });
     return response.ok;
   } catch (error) {
@@ -128,7 +126,6 @@ export async function sendEmailNotification(
   const rt = req.routing_none;
   const carrierName = rt?.carrier?.name || '未設定';
   const targets = [config.sharedEmail, req.email].filter(Boolean).join(',');
-
   const body = createEmailBody(req, carrierName);
 
   try {
@@ -177,8 +174,10 @@ ${req.store_name}
 補助人工: ${req.helper === 'yes' ? '要' : '無'}
 
 ■ 排出量
-キッチン: ${req.vol_kitchen || 0}㎡　バス: ${req.vol_bath || 0}㎡
-トイレ: ${req.vol_toilet || 0}㎡　その他: ${req.vol_other || 0}㎡
+キッチン: ${req.vol_kitchen || 0}㎡
+バス: ${req.vol_bath || 0}㎡
+トイレ: ${req.vol_toilet || 0}㎡
+その他: ${req.vol_other || 0}㎡
 アスベスト: ${req.has_asbestos ? '有（' + req.vol_asbestos + '㎡）' : '無'}
 
 ■ 担当業者（石綿なし）
@@ -211,9 +210,9 @@ export async function sendNotifications(
 ): Promise<{ slack: boolean; email: boolean }> {
   const results = { slack: false, email: false };
 
-  // Slack通知
+  // Slack通知（Webhook URLはサーバー側で管理するのでフラグだけ確認）
   if (emailConfig.slackWebhookUrl) {
-    results.slack = await sendSlackNotification(req, emailConfig.slackWebhookUrl);
+    results.slack = await sendSlackNotification(req);
   }
 
   // Email通知
