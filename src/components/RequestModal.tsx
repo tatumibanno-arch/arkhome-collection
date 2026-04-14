@@ -423,6 +423,14 @@ export default function RequestModal({
                 <div className="di"><label>施工業者</label><div className="v">{request.builder || '—'}</div></div>
               </div>
 
+              {/* 備考表示 */}
+              {request.note && (
+                <div style={{ background: 'var(--sur2)', border: '1px solid var(--bdr)', borderRadius: '8px', padding: '10px 14px', marginBottom: '8px', fontSize: '12px', lineHeight: 1.7 }}>
+                  <div style={{ fontSize: '10px', fontWeight: 700, color: 'var(--tx3)', marginBottom: '4px' }}>📌 備考</div>
+                  <div style={{ color: 'var(--tx)', whiteSpace: 'pre-wrap' }}>{request.note}</div>
+                </div>
+              )}
+
               {/* 社内メモ表示 */}
               {request.memo && (
                 <div style={{ background: 'var(--ambl)', border: '1px solid var(--amb)', borderRadius: '8px', padding: '10px 14px', marginBottom: '12px', fontSize: '12px', lineHeight: 1.7 }}>
