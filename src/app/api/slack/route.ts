@@ -3,10 +3,13 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { webhookUrl, message } = body;
+    const { message } = body;
+
+    // Webhook URLはサーバー側の環境変数から取得（クライアントからは受け取らない）
+    const webhookUrl = process.env.SLACK_WEBHOOK_URL;
 
     if (!webhookUrl) {
-      return NextResponse.json({ error: 'Webhook URL is required' }, { status: 400 });
+      return NextResponse.json({ error: 'Slack webhook not configured' }, { status: 500 });
     }
 
     const response = await fetch(webhookUrl, {
