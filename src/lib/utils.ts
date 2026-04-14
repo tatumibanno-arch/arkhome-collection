@@ -1,7 +1,13 @@
-// 依頼番号生成
+// 依頼番号生成（UUID v4ベースで衝突回避）
 export function generateRequestCode(): string {
-  const timestamp = Date.now().toString(36).toUpperCase();
-  return 'REQ-' + timestamp.slice(-6);
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code = '';
+  const array = new Uint8Array(8);
+  crypto.getRandomValues(array);
+  for (let i = 0; i < 8; i++) {
+    code += chars[array[i] % chars.length];
+  }
+  return 'REQ-' + code;
 }
 
 // 全角→半角変換
@@ -36,7 +42,6 @@ export function exportCSV(data: Record<string, unknown>[], filename: string) {
   const rows = data.map((row) =>
     headers.map((h) => `"${String(row[h] || '').replace(/"/g, '""')}"`)
   );
-
   const bom = '\uFEFF';
   const csv = bom + [headers.map((h) => `"${h}"`), ...rows].map((r) => r.join(',')).join('\r\n');
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
@@ -71,18 +76,20 @@ export function formatPhone(input: string): string {
   const digits = toHan(input).replace(/[^\d]/g, '');
   if (digits.length <= 3) return digits;
   if (digits.startsWith('0120') || digits.startsWith('0800')) {
-    // フリーダイヤル: 0120-xxx-xxx
     if (digits.length <= 4) return digits;
     if (digits.length <= 7) return `${digits.slice(0, 4)}-${digits.slice(4)}`;
     return `${digits.slice(0, 4)}-${digits.slice(4, 7)}-${digits.slice(7, 10)}`;
   }
-  if (digits.startsWith('090') || digits.startsWith('080') || digits.startsWith('070') || digits.startsWith('050')) {
-    // 携帯: 090-xxxx-xxxx
+  if (
+    digits.startsWith('090') ||
+    digits.startsWith('080') ||
+    digits.startsWith('070') ||
+    digits.startsWith('050')
+  ) {
     if (digits.length <= 3) return digits;
     if (digits.length <= 7) return `${digits.slice(0, 3)}-${digits.slice(3)}`;
     return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7, 11)}`;
   }
-  // 固定電話: 0xx-xxxx-xxxx
   if (digits.length <= 4) return digits;
   if (digits.length <= 8) return `${digits.slice(0, 4)}-${digits.slice(4)}`;
   return `${digits.slice(0, 4)}-${digits.slice(4, 8)}-${digits.slice(8, 12)}`;
