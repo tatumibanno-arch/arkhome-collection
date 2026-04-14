@@ -55,12 +55,16 @@ export default function RequestForm({ onSubmitSuccess, showMemo = false, showCon
 
   const loadData = async () => {
     try {
-      const [storesData, vendorsData] = await Promise.all([
-        getStores(),
-        getVendors(),
-      ]);
+      const storesData = await getStores();
       setStores(storesData);
-      setVendors(vendorsData);
+      // vendorsはログイン済みの場合のみ取得（社内フォーム用）
+      try {
+        const vendorsData = await getVendors();
+        setVendors(vendorsData);
+      } catch {
+        // 未ログイン（お客様フォーム）ではvendors取得失敗するが問題ない
+        setVendors([]);
+      }
     } catch (error) {
       console.error('Failed to load data:', error);
       showToast('データの読み込みに失敗しました');
@@ -112,6 +116,25 @@ export default function RequestForm({ onSubmitSuccess, showMemo = false, showCon
     }
   };
 
+  // ルーティング取得（社内はクライアント側、お客様はAPI Route経由）
+  const fetchRouting = async (): Promise<{ routingNone: any; routingAsb: any }> => {
+    if (vendors.length > 0) {
+      // 社内フォーム：vendorsが取得できている場合はクライアント側で
+      const routingNone = await getRouting(storeId, 'none', vendors);
+      const routingAsb = await getRouting(storeId, 'asb', vendors);
+      return { routingNone, routingAsb };
+    } else {
+      // お客様フォーム：API Route経由でサーバーサイドで取得
+      const res = await fetch('/api/routing', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ storeId }),
+      });
+      if (!res.ok) throw new Error('Routing fetch failed');
+      return await res.json();
+    }
+  };
+
   const handleSubmit = async () => {
     setLoading(true);
 
@@ -119,8 +142,7 @@ export default function RequestForm({ onSubmitSuccess, showMemo = false, showCon
       const store = stores.find((s) => s.id === storeId);
       if (!store) throw new Error('店舗が見つかりません');
 
-      const routingNone = await getRouting(storeId, 'none', vendors);
-      const routingAsb = await getRouting(storeId, 'asb', vendors);
+      const { routingNone, routingAsb } = await fetchRouting();
 
       const request = await createRequest({
         store_id: storeId,
@@ -350,163 +372,86 @@ export default function RequestForm({ onSubmitSuccess, showMemo = false, showCon
         <p>アークホーム各店舗から共栄紙業への廃棄物回収依頼</p>
       </div>
       <div className="fbody">
-        {/* 店舗情報 */}
         <div className="slabel">店舗情報</div>
         <div className="frow full">
           <div className="fg">
             <label>店舗名<span className="r">*</span></label>
-            <select
-              value={storeId}
-              onChange={(e) => setStoreId(e.target.value)}
-              className={errors.includes('店舗名') ? 'err-field' : ''}
-            >
+            <select value={storeId} onChange={(e) => setStoreId(e.target.value)} className={errors.includes('店舗名') ? 'err-field' : ''}>
               <option value="">選択してください</option>
-              {stores.map((store) => (
-                <option key={store.id} value={store.id}>{store.name}</option>
-              ))}
+              {stores.map((store) => (<option key={store.id} value={store.id}>{store.name}</option>))}
             </select>
           </div>
         </div>
         <div className="frow">
           <div className="fg">
             <label>店舗担当者名<span className="r">*</span></label>
-            <input
-              type="text"
-              value={staff}
-              onChange={(e) => setStaff(e.target.value)}
-              placeholder="山田 太郎"
-              className={errors.includes('店舗担当者名') ? 'err-field' : ''}
-            />
+            <input type="text" value={staff} onChange={(e) => setStaff(e.target.value)} placeholder="山田 太郎" className={errors.includes('店舗担当者名') ? 'err-field' : ''} />
           </div>
           <div className="fg">
             <label>店舗担当者 連絡先<span className="r">*</span></label>
-            <input
-              type="text"
-              value={staffTel}
-              onChange={(e) => {
-                if (!composingRef.current) setStaffTel(formatPhone(e.target.value));
-                else setStaffTel(e.target.value);
-              }}
+            <input type="text" value={staffTel}
+              onChange={(e) => { if (!composingRef.current) setStaffTel(formatPhone(e.target.value)); else setStaffTel(e.target.value); }}
               onCompositionStart={() => { composingRef.current = true; }}
-              onCompositionEnd={(e) => {
-                composingRef.current = false;
-                setStaffTel(formatPhone((e.target as HTMLInputElement).value));
-              }}
-              placeholder="090-1234-5678"
-              className={errors.includes('店舗担当者 連絡先') ? 'err-field' : ''}
-            />
+              onCompositionEnd={(e) => { composingRef.current = false; setStaffTel(formatPhone((e.target as HTMLInputElement).value)); }}
+              placeholder="090-1234-5678" className={errors.includes('店舗担当者 連絡先') ? 'err-field' : ''} />
           </div>
         </div>
         <div className="frow full">
           <div className="fg">
             <label>店舗担当者 メールアドレス<span className="r">*</span></label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="taro.yamada@example.co.jp"
-              className={errors.includes('店舗担当者 メールアドレス') || errors.includes('メールアドレスの形式が正しくありません') ? 'err-field' : ''}
-            />
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="taro.yamada@example.co.jp"
+              className={errors.includes('店舗担当者 メールアドレス') || errors.includes('メールアドレスの形式が正しくありません') ? 'err-field' : ''} />
           </div>
         </div>
 
-        {/* 現場情報 */}
         <div className="slabel" style={{ marginTop: '8px' }}>現場情報</div>
         <div className="frow">
           <div className="fg">
             <label>依頼場所の名称（お客様名）<span className="r">*</span></label>
-            <input
-              type="text"
-              value={customerName}
-              onChange={(e) => setCustomerName(e.target.value)}
-              placeholder="鈴木 一郎様"
-              className={errors.includes('依頼場所の名称（お客様名）') ? 'err-field' : ''}
-            />
+            <input type="text" value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="鈴木 一郎様" className={errors.includes('依頼場所の名称（お客様名）') ? 'err-field' : ''} />
           </div>
           <div className="fg">
             <label>依頼場所の郵便番号</label>
-            <input
-              type="text"
-              value={zip}
-              onChange={(e) => {
-                if (!composingRef.current) handleZipChange(e.target.value);
-                else setZip(e.target.value);
-              }}
+            <input type="text" value={zip}
+              onChange={(e) => { if (!composingRef.current) handleZipChange(e.target.value); else setZip(e.target.value); }}
               onCompositionStart={() => { composingRef.current = true; }}
-              onCompositionEnd={(e) => {
-                composingRef.current = false;
-                handleZipChange((e.target as HTMLInputElement).value);
-              }}
-              placeholder="920-0000"
-              maxLength={8}
-            />
+              onCompositionEnd={(e) => { composingRef.current = false; handleZipChange((e.target as HTMLInputElement).value); }}
+              placeholder="920-0000" maxLength={8} />
           </div>
         </div>
         <div className="frow full">
           <div className="fg">
             <label>依頼場所の住所<span className="r">*</span></label>
-            <input
-              type="text"
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              placeholder="金沢市○○町1-2-3"
-              className={errors.includes('依頼場所の住所') ? 'err-field' : ''}
-            />
+            <input type="text" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="金沢市○○町1-2-3" className={errors.includes('依頼場所の住所') ? 'err-field' : ''} />
           </div>
         </div>
         <div className="frow full">
           <div className="fg">
             <label>施工業者名</label>
-            <input
-              type="text"
-              value={builder}
-              onChange={(e) => setBuilder(e.target.value)}
-              placeholder="○○建設"
-            />
+            <input type="text" value={builder} onChange={(e) => setBuilder(e.target.value)} placeholder="○○建設" />
           </div>
         </div>
         <div className="frow">
           <div className="fg">
             <label>現場責任者名（担当者名）<span className="r">*</span></label>
-            <input
-              type="text"
-              value={chief}
-              onChange={(e) => setChief(e.target.value)}
-              placeholder="田中 次郎"
-              className={errors.includes('現場責任者名') ? 'err-field' : ''}
-            />
+            <input type="text" value={chief} onChange={(e) => setChief(e.target.value)} placeholder="田中 次郎" className={errors.includes('現場責任者名') ? 'err-field' : ''} />
           </div>
           <div className="fg">
             <label>現場責任者 連絡先<span className="r">*</span></label>
-            <input
-              type="text"
-              value={chiefTel}
-              onChange={(e) => {
-                if (!composingRef.current) setChiefTel(formatPhone(e.target.value));
-                else setChiefTel(e.target.value);
-              }}
+            <input type="text" value={chiefTel}
+              onChange={(e) => { if (!composingRef.current) setChiefTel(formatPhone(e.target.value)); else setChiefTel(e.target.value); }}
               onCompositionStart={() => { composingRef.current = true; }}
-              onCompositionEnd={(e) => {
-                composingRef.current = false;
-                setChiefTel(formatPhone((e.target as HTMLInputElement).value));
-              }}
-              placeholder="080-9876-5432"
-              className={errors.includes('現場責任者 連絡先') ? 'err-field' : ''}
-            />
+              onCompositionEnd={(e) => { composingRef.current = false; setChiefTel(formatPhone((e.target as HTMLInputElement).value)); }}
+              placeholder="080-9876-5432" className={errors.includes('現場責任者 連絡先') ? 'err-field' : ''} />
           </div>
         </div>
 
-        {/* 回収情報 */}
         <div className="slabel" style={{ marginTop: '8px' }}>回収情報</div>
         <div className="frow">
           <div className="fg">
             <label>回収希望日<span className="r">*</span></label>
-            <input
-              type="date"
-              value={collectionDate}
-              onChange={(e) => setCollectionDate(e.target.value)}
-              className={errors.includes('回収希望日') || errors.includes('回収希望日が過去の日付です') ? 'err-field' : ''}
-            />
+            <input type="date" value={collectionDate} onChange={(e) => setCollectionDate(e.target.value)}
+              className={errors.includes('回収希望日') || errors.includes('回収希望日が過去の日付です') ? 'err-field' : ''} />
           </div>
           <div className="fg">
             <label>回収希望時間帯</label>
@@ -538,39 +483,22 @@ export default function RequestForm({ onSubmitSuccess, showMemo = false, showCon
           </div>
         </div>
 
-        {/* 排出量・アスベスト */}
         <div className="slabel" style={{ marginTop: '8px' }}>排出量・アスベスト</div>
         <div className="frow full">
           <div className="fg">
             <label>排出予定量（㎡）</label>
             <div className="vol-grid">
-              <div className="vol-item">
-                <label>キッチン</label>
-                <input type="number" value={volKitchen} onChange={(e) => setVolKitchen(toHanNum(e.target.value))} placeholder="0" step="0.5" min="0" />
-              </div>
-              <div className="vol-item">
-                <label>バス</label>
-                <input type="number" value={volBath} onChange={(e) => setVolBath(toHanNum(e.target.value))} placeholder="0" step="0.5" min="0" />
-              </div>
-              <div className="vol-item">
-                <label>トイレ</label>
-                <input type="number" value={volToilet} onChange={(e) => setVolToilet(toHanNum(e.target.value))} placeholder="0" step="0.5" min="0" />
-              </div>
-              <div className="vol-item">
-                <label>その他</label>
-                <input type="number" value={volOther} onChange={(e) => setVolOther(toHanNum(e.target.value))} placeholder="0" step="0.5" min="0" />
-              </div>
+              <div className="vol-item"><label>キッチン</label><input type="number" value={volKitchen} onChange={(e) => setVolKitchen(toHanNum(e.target.value))} placeholder="0" step="0.5" min="0" /></div>
+              <div className="vol-item"><label>バス</label><input type="number" value={volBath} onChange={(e) => setVolBath(toHanNum(e.target.value))} placeholder="0" step="0.5" min="0" /></div>
+              <div className="vol-item"><label>トイレ</label><input type="number" value={volToilet} onChange={(e) => setVolToilet(toHanNum(e.target.value))} placeholder="0" step="0.5" min="0" /></div>
+              <div className="vol-item"><label>その他</label><input type="number" value={volOther} onChange={(e) => setVolOther(toHanNum(e.target.value))} placeholder="0" step="0.5" min="0" /></div>
             </div>
           </div>
         </div>
         <div className="frow">
           <div className="fg">
             <label>アスベスト含有<span className="r">*</span></label>
-            <select
-              value={hasAsbestos}
-              onChange={(e) => setHasAsbestos(e.target.value)}
-              className={errors.includes('アスベスト含有') ? 'err-field' : ''}
-            >
+            <select value={hasAsbestos} onChange={(e) => setHasAsbestos(e.target.value)} className={errors.includes('アスベスト含有') ? 'err-field' : ''}>
               <option value="">選択してください</option>
               <option value="none">無</option>
               <option value="yes">有</option>
@@ -587,45 +515,28 @@ export default function RequestForm({ onSubmitSuccess, showMemo = false, showCon
           ⚠ アスベスト含有の場合、石綿なし・石綿あり 両マニフェストが生成されます。
         </div>
 
-        {/* エラー表示 */}
         <div className={`form-errors ${errors.length > 0 ? 'show' : ''}`}>
           <h4>⚠ 以下の必須項目を入力してください</h4>
-          <ul>
-            {errors.map((err, i) => (<li key={i}>{err}</li>))}
-          </ul>
+          <ul>{errors.map((err, i) => (<li key={i}>{err}</li>))}</ul>
         </div>
 
-        {/* 備考 */}
         <div className="frow full">
           <div className="fg">
             <label>備考</label>
-            <textarea
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              placeholder="特記事項・搬出経路・鍵の受け渡し方法など"
-            />
+            <textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="特記事項・搬出経路・鍵の受け渡し方法など" />
           </div>
         </div>
 
-        {/* 社内メモ（社内用のみ表示） */}
         {showMemo && (
           <div className="frow full">
             <div className="fg">
               <label>社内メモ <span style={{ fontWeight: 400, fontSize: '10px', color: 'var(--tx3)' }}>（マニフェストには印刷されません）</span></label>
-              <textarea
-                value={memo}
-                onChange={(e) => setMemo(e.target.value)}
-                placeholder="社内共有用のメモ・連絡事項など"
-              />
+              <textarea value={memo} onChange={(e) => setMemo(e.target.value)} placeholder="社内共有用のメモ・連絡事項など" />
             </div>
           </div>
         )}
 
-        <button
-          className="sub-btn"
-          onClick={handleConfirm}
-          disabled={loading}
-        >
+        <button className="sub-btn" onClick={handleConfirm} disabled={loading}>
           {loading ? '送信中...' : showConfirmation ? '入力内容を確認する' : '依頼を送信'}
         </button>
       </div>
