@@ -10,14 +10,16 @@ import { useToast } from './Toast';
 interface FormProps {
   onSubmitSuccess?: (request: Request) => void;
   showMemo?: boolean;
+  showConfirmation?: boolean;
 }
 
-export default function RequestForm({ onSubmitSuccess, showMemo = false }: FormProps) {
+export default function RequestForm({ onSubmitSuccess, showMemo = false, showConfirmation = false }: FormProps) {
   const { showToast } = useToast();
   const [stores, setStores] = useState<Store[]>([]);
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
+  const [confirming, setConfirming] = useState(false);
   const composingRef = useRef(false);
 
   // Form State
@@ -65,7 +67,6 @@ export default function RequestForm({ onSubmitSuccess, showMemo = false }: FormP
     }
   };
 
-  // 郵便番号から住所自動入力
   const handleZipChange = async (value: string) => {
     const formatted = formatZip(value);
     setZip(formatted);
@@ -96,20 +97,28 @@ export default function RequestForm({ onSubmitSuccess, showMemo = false }: FormP
     return errs;
   };
 
-  const handleSubmit = async () => {
+  const handleConfirm = () => {
     const validationErrors = validate();
     if (validationErrors.length > 0) {
       setErrors(validationErrors);
       return;
     }
     setErrors([]);
+    if (showConfirmation) {
+      setConfirming(true);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      handleSubmit();
+    }
+  };
+
+  const handleSubmit = async () => {
     setLoading(true);
 
     try {
       const store = stores.find((s) => s.id === storeId);
       if (!store) throw new Error('店舗が見つかりません');
 
-      // ルーティング情報を取得
       const routingNone = await getRouting(storeId, 'none', vendors);
       const routingAsb = await getRouting(storeId, 'asb', vendors);
 
@@ -143,7 +152,6 @@ export default function RequestForm({ onSubmitSuccess, showMemo = false }: FormP
         routing_asb: routingAsb,
       });
 
-      // 通知送信
       const emailConfig = await getEmailConfig();
       if (emailConfig) {
         await sendNotifications(request, {
@@ -156,9 +164,8 @@ export default function RequestForm({ onSubmitSuccess, showMemo = false }: FormP
       }
 
       showToast(`依頼を送信しました（${request.request_code}）`);
-
-      // フォームリセット
       resetForm();
+      setConfirming(false);
 
       if (onSubmitSuccess) {
         onSubmitSuccess(request);
@@ -197,6 +204,145 @@ export default function RequestForm({ onSubmitSuccess, showMemo = false }: FormP
     setMemo('');
   };
 
+  const getStoreName = () => stores.find((s) => s.id === storeId)?.name || '';
+
+  // 確認画面
+  if (confirming) {
+    const confirmRowStyle: React.CSSProperties = {
+      display: 'grid',
+      gridTemplateColumns: '140px 1fr',
+      borderBottom: '1px solid var(--bdr)',
+      fontSize: '13px',
+    };
+    const confirmLabelStyle: React.CSSProperties = {
+      padding: '10px 12px',
+      fontWeight: 700,
+      color: 'var(--tx2)',
+      fontSize: '12px',
+      background: 'var(--sur2)',
+    };
+    const confirmValueStyle: React.CSSProperties = {
+      padding: '10px 12px',
+      color: 'var(--tx)',
+      fontWeight: 500,
+    };
+
+    return (
+      <div className="card">
+        <div className="fhead" style={{ background: 'var(--bl)' }}>
+          <h1>入力内容の確認</h1>
+          <p>以下の内容で送信します。よろしいですか？</p>
+        </div>
+        <div style={{ padding: '0' }}>
+          <div style={confirmRowStyle}>
+            <div style={confirmLabelStyle}>店舗名</div>
+            <div style={confirmValueStyle}>{getStoreName()}</div>
+          </div>
+          <div style={confirmRowStyle}>
+            <div style={confirmLabelStyle}>店舗担当者</div>
+            <div style={confirmValueStyle}>{staff}（{staffTel}）</div>
+          </div>
+          <div style={confirmRowStyle}>
+            <div style={confirmLabelStyle}>メールアドレス</div>
+            <div style={confirmValueStyle}>{email}</div>
+          </div>
+          <div style={confirmRowStyle}>
+            <div style={confirmLabelStyle}>お客様名</div>
+            <div style={confirmValueStyle}>{customerName}</div>
+          </div>
+          <div style={confirmRowStyle}>
+            <div style={confirmLabelStyle}>住所</div>
+            <div style={confirmValueStyle}>{zip ? `〒${zip} ` : ''}{address}</div>
+          </div>
+          {builder && (
+            <div style={confirmRowStyle}>
+              <div style={confirmLabelStyle}>施工業者</div>
+              <div style={confirmValueStyle}>{builder}</div>
+            </div>
+          )}
+          <div style={confirmRowStyle}>
+            <div style={confirmLabelStyle}>現場責任者</div>
+            <div style={confirmValueStyle}>{chief}（{chiefTel}）</div>
+          </div>
+          <div style={confirmRowStyle}>
+            <div style={confirmLabelStyle}>回収希望日</div>
+            <div style={confirmValueStyle}>{collectionDate}（{timeFrom}〜{timeTo}）</div>
+          </div>
+          <div style={confirmRowStyle}>
+            <div style={confirmLabelStyle}>車両サイズ</div>
+            <div style={confirmValueStyle}>{carSize || '未指定'}</div>
+          </div>
+          <div style={confirmRowStyle}>
+            <div style={confirmLabelStyle}>補助人工</div>
+            <div style={confirmValueStyle}>{helper === 'yes' ? '要' : '無'}</div>
+          </div>
+          <div style={confirmRowStyle}>
+            <div style={confirmLabelStyle}>排出量</div>
+            <div style={confirmValueStyle}>
+              {[
+                volKitchen && `キッチン ${volKitchen}㎡`,
+                volBath && `バス ${volBath}㎡`,
+                volToilet && `トイレ ${volToilet}㎡`,
+                volOther && `その他 ${volOther}㎡`,
+              ].filter(Boolean).join('、') || '未入力'}
+            </div>
+          </div>
+          <div style={confirmRowStyle}>
+            <div style={confirmLabelStyle}>アスベスト含有</div>
+            <div style={{ ...confirmValueStyle, color: hasAsbestos === 'yes' ? 'var(--rd)' : 'inherit', fontWeight: hasAsbestos === 'yes' ? 700 : 500 }}>
+              {hasAsbestos === 'yes' ? `有（${volAsbestos || 0}㎡）` : '無'}
+            </div>
+          </div>
+          {note && (
+            <div style={confirmRowStyle}>
+              <div style={confirmLabelStyle}>備考</div>
+              <div style={{ ...confirmValueStyle, whiteSpace: 'pre-wrap' }}>{note}</div>
+            </div>
+          )}
+        </div>
+        <div style={{ padding: '20px 26px', display: 'flex', gap: '10px' }}>
+          <button
+            onClick={handleSubmit}
+            disabled={loading}
+            style={{
+              flex: 1,
+              padding: '14px',
+              background: 'var(--g)',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '8px',
+              fontFamily: 'inherit',
+              fontSize: '15px',
+              fontWeight: 700,
+              cursor: loading ? 'not-allowed' : 'pointer',
+              opacity: loading ? 0.7 : 1,
+            }}
+          >
+            {loading ? '送信中...' : 'この内容で送信する'}
+          </button>
+          <button
+            onClick={() => setConfirming(false)}
+            disabled={loading}
+            style={{
+              padding: '14px 24px',
+              background: 'var(--sur2)',
+              color: 'var(--tx2)',
+              border: '1.5px solid var(--bdr)',
+              borderRadius: '8px',
+              fontFamily: 'inherit',
+              fontSize: '14px',
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
+          >
+            戻って修正
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // 入力フォーム
   return (
     <div className="card">
       <div className="fhead">
@@ -477,10 +623,10 @@ export default function RequestForm({ onSubmitSuccess, showMemo = false }: FormP
 
         <button
           className="sub-btn"
-          onClick={handleSubmit}
+          onClick={handleConfirm}
           disabled={loading}
         >
-          {loading ? '送信中...' : '依頼を送信'}
+          {loading ? '送信中...' : showConfirmation ? '入力内容を確認する' : '依頼を送信'}
         </button>
       </div>
     </div>
