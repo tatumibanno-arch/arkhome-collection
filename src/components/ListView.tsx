@@ -99,11 +99,46 @@ export default function ListView({
             <td>
               {request.customer_name}
               {request.has_asbestos && <span className="asb-tag">石綿</span>}
+              {/* 備考・メモありタグ */}
+              {request.note && (
+                <span style={{
+                  fontSize: '9px',
+                  fontWeight: 700,
+                  padding: '1px 5px',
+                  borderRadius: '4px',
+                  background: 'var(--sur2)',
+                  color: 'var(--tx3)',
+                  border: '1px solid var(--bdr)',
+                  marginLeft: '3px',
+                }}>
+                  📌備考
+                </span>
+              )}
+              {request.memo && (
+                <span style={{
+                  fontSize: '9px',
+                  fontWeight: 700,
+                  padding: '1px 5px',
+                  borderRadius: '4px',
+                  background: 'var(--ambl)',
+                  color: 'var(--amb)',
+                  border: '1px solid var(--amb)',
+                  marginLeft: '3px',
+                }}>
+                  📝メモ
+                </span>
+              )}
             </td>
             <td style={{ color: 'var(--tx2)', fontSize: '12px' }}>
               {request.address}
             </td>
-            <td style={{ whiteSpace: 'nowrap', fontSize: '12px', color: 'var(--tx2)' }}>
+            <td
+              style={{
+                whiteSpace: 'nowrap',
+                fontSize: '12px',
+                color: 'var(--tx2)',
+              }}
+            >
               {new Date(request.created_at).toLocaleDateString('ja-JP')}
             </td>
             <td style={{ whiteSpace: 'nowrap', fontWeight: 600 }}>
