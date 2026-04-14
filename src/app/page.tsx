@@ -4,7 +4,9 @@ import { useState, useEffect, useCallback } from 'react';
 import { Request, RequestStatus, Store } from '@/types';
 import { getRequests, getStores, updateRequestStatus, deleteRequest } from '@/lib/api';
 import { exportCSV } from '@/lib/utils';
+import { supabase } from '@/lib/supabase';
 import { ToastProvider, useToast } from '@/components/Toast';
+import LoginForm from '@/components/LoginForm';
 import RequestForm from '@/components/RequestForm';
 import KanbanBoard from '@/components/KanbanBoard';
 import ListView from '@/components/ListView';
@@ -18,6 +20,7 @@ type TabType = 'form' | 'kanban' | 'manifest' | 'settings';
 
 function MainContent() {
   const { showToast } = useToast();
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>('form');
   const [viewType, setViewType] = useState<ViewType>('kanban');
   const [requests, setRequests] = useState<Request[]>([]);
@@ -42,6 +45,26 @@ function MainContent() {
   const [manifestStoreFilter, setManifestStoreFilter] = useState('all');
   const [manifestSort, setManifestSort] = useState('date_asc');
 
+  // ログイン状態チェック
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setIsLoggedIn(!!session);
+    };
+    checkSession();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsLoggedIn(!!session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setIsLoggedIn(false);
+  };
+
   const loadData = useCallback(async () => {
     try {
       const [requestsData, storesData] = await Promise.all([
@@ -59,8 +82,10 @@ function MainContent() {
   }, [showToast]);
 
   useEffect(() => {
-    loadData();
-  }, [loadData]);
+    if (isLoggedIn) {
+      loadData();
+    }
+  }, [isLoggedIn, loadData]);
 
   // URLパラメータ ?open=xxx で自動モーダル表示
   useEffect(() => {
@@ -73,7 +98,6 @@ function MainContent() {
           setSelectedRequest(target);
           setModalOpen(true);
           setActiveTab('kanban');
-          // URLからパラメータを消す（再読み込み時に再度開かないように）
           window.history.replaceState({}, '', '/');
         }
       }
@@ -84,7 +108,6 @@ function MainContent() {
   const getFilteredRequests = useCallback(() => {
     let filtered = [...requests];
 
-    // 検索
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       filtered = filtered.filter(
@@ -95,7 +118,6 @@ function MainContent() {
       );
     }
 
-    // ステータス
     if (statusFilter === 'active') {
       filtered = filtered.filter((r) => parseInt(r.status) < 5);
     } else if (statusFilter === 'done') {
@@ -104,12 +126,10 @@ function MainContent() {
       filtered = filtered.filter((r) => r.status === statusFilter);
     }
 
-    // 店舗
     if (storeFilter !== 'all') {
       filtered = filtered.filter((r) => r.store_id === storeFilter);
     }
 
-    // ソート
     if (sortOrder === 'date_asc') {
       filtered.sort((a, b) => a.collection_date.localeCompare(b.collection_date));
     } else if (sortOrder === 'date_desc') {
@@ -196,10 +216,8 @@ function MainContent() {
 
   const handlePrintManifest = (request: Request, type?: 'none' | 'asb') => {
     if (type) {
-      // 特定のタイプが指定された場合はそれだけ開く
       window.open(`/print?id=${request.id}&type=${type}`, '_blank');
     } else {
-      // タイプ未指定：石綿なしを開く＋アスベストありなら石綿ありも開く
       window.open(`/print?id=${request.id}&type=none`, '_blank');
       if (request.has_asbestos) {
         setTimeout(() => {
@@ -264,6 +282,20 @@ function MainContent() {
     showToast(`📥 ${filtered.length}件をCSV出力しました`);
   };
 
+  // ログイン状態確認中
+  if (isLoggedIn === null) {
+    return (
+      <div style={{ padding: '48px', textAlign: 'center', color: 'var(--tx3)' }}>
+        読み込み中...
+      </div>
+    );
+  }
+
+  // 未ログイン → ログイン画面
+  if (!isLoggedIn) {
+    return <LoginForm onLogin={() => setIsLoggedIn(true)} />;
+  }
+
   const activeRequestCount = requests.filter((r) => parseInt(r.status) < 5).length;
 
   if (loading) {
@@ -308,6 +340,22 @@ function MainContent() {
             ⚙ マスター設定
           </button>
         </div>
+        <button
+          onClick={handleLogout}
+          style={{
+            padding: '5px 12px',
+            background: 'rgba(255,255,255,0.12)',
+            color: 'rgba(255,255,255,0.7)',
+            border: '1px solid rgba(255,255,255,0.2)',
+            borderRadius: '6px',
+            fontSize: '11px',
+            cursor: 'pointer',
+            fontFamily: 'inherit',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          ログアウト
+        </button>
       </nav>
 
       {/* フォームタブ */}
