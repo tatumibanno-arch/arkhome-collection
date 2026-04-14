@@ -9,9 +9,10 @@ import { useToast } from './Toast';
 
 interface FormProps {
   onSubmitSuccess?: (request: Request) => void;
+  showMemo?: boolean;
 }
 
-export default function RequestForm({ onSubmitSuccess }: FormProps) {
+export default function RequestForm({ onSubmitSuccess, showMemo = false }: FormProps) {
   const { showToast } = useToast();
   const [stores, setStores] = useState<Store[]>([]);
   const [vendors, setVendors] = useState<Vendor[]>([]);
@@ -42,6 +43,7 @@ export default function RequestForm({ onSubmitSuccess }: FormProps) {
   const [hasAsbestos, setHasAsbestos] = useState<string>('');
   const [volAsbestos, setVolAsbestos] = useState('');
   const [note, setNote] = useState('');
+  const [memo, setMemo] = useState('');
 
   const timeOptions = generateTimeOptions();
 
@@ -100,7 +102,6 @@ export default function RequestForm({ onSubmitSuccess }: FormProps) {
       setErrors(validationErrors);
       return;
     }
-
     setErrors([]);
     setLoading(true);
 
@@ -136,6 +137,7 @@ export default function RequestForm({ onSubmitSuccess }: FormProps) {
         has_asbestos: hasAsbestos === 'yes',
         vol_asbestos: parseFloat(volAsbestos) || 0,
         note: note || null,
+        memo: memo || null,
         status: '0',
         routing_none: routingNone,
         routing_asb: routingAsb,
@@ -154,10 +156,10 @@ export default function RequestForm({ onSubmitSuccess }: FormProps) {
       }
 
       showToast(`依頼を送信しました（${request.request_code}）`);
-      
+
       // フォームリセット
       resetForm();
-      
+
       if (onSubmitSuccess) {
         onSubmitSuccess(request);
       }
@@ -192,6 +194,7 @@ export default function RequestForm({ onSubmitSuccess }: FormProps) {
     setHasAsbestos('');
     setVolAsbestos('');
     setNote('');
+    setMemo('');
   };
 
   return (
@@ -234,9 +237,15 @@ export default function RequestForm({ onSubmitSuccess }: FormProps) {
             <input
               type="text"
               value={staffTel}
-              onChange={(e) => { if (!composingRef.current) setStaffTel(formatPhone(e.target.value)); else setStaffTel(e.target.value); }}
+              onChange={(e) => {
+                if (!composingRef.current) setStaffTel(formatPhone(e.target.value));
+                else setStaffTel(e.target.value);
+              }}
               onCompositionStart={() => { composingRef.current = true; }}
-              onCompositionEnd={(e) => { composingRef.current = false; setStaffTel(formatPhone((e.target as HTMLInputElement).value)); }}
+              onCompositionEnd={(e) => {
+                composingRef.current = false;
+                setStaffTel(formatPhone((e.target as HTMLInputElement).value));
+              }}
               placeholder="070-6420-2434"
               className={errors.includes('店舗担当者 連絡先') ? 'err-field' : ''}
             />
@@ -273,9 +282,15 @@ export default function RequestForm({ onSubmitSuccess }: FormProps) {
             <input
               type="text"
               value={zip}
-              onChange={(e) => { if (!composingRef.current) handleZipChange(e.target.value); else setZip(e.target.value); }}
+              onChange={(e) => {
+                if (!composingRef.current) handleZipChange(e.target.value);
+                else setZip(e.target.value);
+              }}
               onCompositionStart={() => { composingRef.current = true; }}
-              onCompositionEnd={(e) => { composingRef.current = false; handleZipChange((e.target as HTMLInputElement).value); }}
+              onCompositionEnd={(e) => {
+                composingRef.current = false;
+                handleZipChange((e.target as HTMLInputElement).value);
+              }}
               placeholder="920-0000"
               maxLength={8}
             />
@@ -320,9 +335,15 @@ export default function RequestForm({ onSubmitSuccess }: FormProps) {
             <input
               type="text"
               value={chiefTel}
-              onChange={(e) => { if (!composingRef.current) setChiefTel(formatPhone(e.target.value)); else setChiefTel(e.target.value); }}
+              onChange={(e) => {
+                if (!composingRef.current) setChiefTel(formatPhone(e.target.value));
+                else setChiefTel(e.target.value);
+              }}
               onCompositionStart={() => { composingRef.current = true; }}
-              onCompositionEnd={(e) => { composingRef.current = false; setChiefTel(formatPhone((e.target as HTMLInputElement).value)); }}
+              onCompositionEnd={(e) => {
+                composingRef.current = false;
+                setChiefTel(formatPhone((e.target as HTMLInputElement).value));
+              }}
               placeholder="090-2487-1180"
               className={errors.includes('現場責任者 連絡先') ? 'err-field' : ''}
             />
@@ -344,24 +365,12 @@ export default function RequestForm({ onSubmitSuccess }: FormProps) {
           <div className="fg">
             <label>回収希望時間帯</label>
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-              <select
-                value={timeFrom}
-                onChange={(e) => setTimeFrom(e.target.value)}
-                style={{ flex: 1 }}
-              >
-                {timeOptions.map((t) => (
-                  <option key={t} value={t}>{t}</option>
-                ))}
+              <select value={timeFrom} onChange={(e) => setTimeFrom(e.target.value)} style={{ flex: 1 }}>
+                {timeOptions.map((t) => (<option key={t} value={t}>{t}</option>))}
               </select>
               <span style={{ color: 'var(--tx3)' }}>〜</span>
-              <select
-                value={timeTo}
-                onChange={(e) => setTimeTo(e.target.value)}
-                style={{ flex: 1 }}
-              >
-                {timeOptions.map((t) => (
-                  <option key={t} value={t}>{t}</option>
-                ))}
+              <select value={timeTo} onChange={(e) => setTimeTo(e.target.value)} style={{ flex: 1 }}>
+                {timeOptions.map((t) => (<option key={t} value={t}>{t}</option>))}
               </select>
             </div>
           </div>
@@ -371,9 +380,7 @@ export default function RequestForm({ onSubmitSuccess }: FormProps) {
             <label>回収希望車両サイズ</label>
             <select value={carSize} onChange={(e) => setCarSize(e.target.value)}>
               <option value="">未指定</option>
-              {CAR_SIZES.map((s) => (
-                <option key={s} value={s}>{s}</option>
-              ))}
+              {CAR_SIZES.map((s) => (<option key={s} value={s}>{s}</option>))}
             </select>
           </div>
           <div className="fg">
@@ -393,47 +400,19 @@ export default function RequestForm({ onSubmitSuccess }: FormProps) {
             <div className="vol-grid">
               <div className="vol-item">
                 <label>キッチン</label>
-                <input
-                  type="number"
-                  value={volKitchen}
-                  onChange={(e) => setVolKitchen(toHanNum(e.target.value))}
-                  placeholder="0"
-                  step="0.5"
-                  min="0"
-                />
+                <input type="number" value={volKitchen} onChange={(e) => setVolKitchen(toHanNum(e.target.value))} placeholder="0" step="0.5" min="0" />
               </div>
               <div className="vol-item">
                 <label>バス</label>
-                <input
-                  type="number"
-                  value={volBath}
-                  onChange={(e) => setVolBath(toHanNum(e.target.value))}
-                  placeholder="0"
-                  step="0.5"
-                  min="0"
-                />
+                <input type="number" value={volBath} onChange={(e) => setVolBath(toHanNum(e.target.value))} placeholder="0" step="0.5" min="0" />
               </div>
               <div className="vol-item">
                 <label>トイレ</label>
-                <input
-                  type="number"
-                  value={volToilet}
-                  onChange={(e) => setVolToilet(toHanNum(e.target.value))}
-                  placeholder="0"
-                  step="0.5"
-                  min="0"
-                />
+                <input type="number" value={volToilet} onChange={(e) => setVolToilet(toHanNum(e.target.value))} placeholder="0" step="0.5" min="0" />
               </div>
               <div className="vol-item">
                 <label>その他</label>
-                <input
-                  type="number"
-                  value={volOther}
-                  onChange={(e) => setVolOther(toHanNum(e.target.value))}
-                  placeholder="0"
-                  step="0.5"
-                  min="0"
-                />
+                <input type="number" value={volOther} onChange={(e) => setVolOther(toHanNum(e.target.value))} placeholder="0" step="0.5" min="0" />
               </div>
             </div>
           </div>
@@ -454,14 +433,7 @@ export default function RequestForm({ onSubmitSuccess }: FormProps) {
           {hasAsbestos === 'yes' && (
             <div className="fg">
               <label>アスベスト含有量（㎡）</label>
-              <input
-                type="number"
-                value={volAsbestos}
-                onChange={(e) => setVolAsbestos(toHanNum(e.target.value))}
-                placeholder="㎡"
-                step="0.5"
-                min="0"
-              />
+              <input type="number" value={volAsbestos} onChange={(e) => setVolAsbestos(toHanNum(e.target.value))} placeholder="㎡" step="0.5" min="0" />
             </div>
           )}
         </div>
@@ -473,9 +445,7 @@ export default function RequestForm({ onSubmitSuccess }: FormProps) {
         <div className={`form-errors ${errors.length > 0 ? 'show' : ''}`}>
           <h4>⚠ 以下の必須項目を入力してください</h4>
           <ul>
-            {errors.map((err, i) => (
-              <li key={i}>{err}</li>
-            ))}
+            {errors.map((err, i) => (<li key={i}>{err}</li>))}
           </ul>
         </div>
 
@@ -490,6 +460,20 @@ export default function RequestForm({ onSubmitSuccess }: FormProps) {
             />
           </div>
         </div>
+
+        {/* 社内メモ（社内用のみ表示） */}
+        {showMemo && (
+          <div className="frow full">
+            <div className="fg">
+              <label>社内メモ <span style={{ fontWeight: 400, fontSize: '10px', color: 'var(--tx3)' }}>（マニフェストには印刷されません）</span></label>
+              <textarea
+                value={memo}
+                onChange={(e) => setMemo(e.target.value)}
+                placeholder="社内共有用のメモ・連絡事項など"
+              />
+            </div>
+          </div>
+        )}
 
         <button
           className="sub-btn"
