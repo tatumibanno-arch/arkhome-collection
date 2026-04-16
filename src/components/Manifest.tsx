@@ -37,6 +37,15 @@ const DEFAULT_CHECKS_ASB = [
   'がれき類',
 ];
 
+// 🆕 店舗別・石綿ありマニフェストの品目オーバーライド
+// 特別対応が必要な店舗のみ登録。ここに無い店舗は上記のデフォルトが使われる。
+const STORE_ASB_OVERRIDES: Record<string, { checks: string[]; name: string }> = {
+  'アークホーム御経塚店': {
+    checks: ['ガラス陶磁器くず'],
+    name: '石膏ボード',
+  },
+};
+
 export default function Manifest({ request, type }: ManifestProps) {
   const isAsb = type === 'asb';
   const rt: RoutingInfo | null = isAsb ? request.routing_asb : request.routing_none;
@@ -55,7 +64,6 @@ export default function Manifest({ request, type }: ManifestProps) {
   const transfer = rt.transfer;
   const carrier2 = rt.carrier2 || null;
   const finalDest = rt.final_dest || null;
-
   const faxNo = rt.fax || KYOEI_FAX;
 
   const d = formatDate(request.collection_date);
@@ -66,6 +74,7 @@ export default function Manifest({ request, type }: ManifestProps) {
     (request.vol_bath || 0) +
     (request.vol_toilet || 0) +
     (request.vol_other || 0);
+
   const volDisplay = isAsb
     ? (request.vol_asbestos || 0).toFixed(1) + '㎥'
     : totalVol > 0
@@ -75,8 +84,16 @@ export default function Manifest({ request, type }: ManifestProps) {
   const CAR_SIZES = ['軽トラ', '2t車', '4t車', 'ユニック'];
   const HELPERS = ['無', '要'];
 
-  // デフォルトチェックの判定
-  const defaultChecks = isAsb ? DEFAULT_CHECKS_ASB : DEFAULT_CHECKS_NONE;
+  // 🔄 店舗オーバーライドの判定（石綿ありのみ適用）
+  const storeOverride = isAsb ? STORE_ASB_OVERRIDES[request.store_name] : null;
+
+  // デフォルトチェックの判定（オーバーライドがあればそれを優先）
+  const defaultChecks = storeOverride?.checks
+    ?? (isAsb ? DEFAULT_CHECKS_ASB : DEFAULT_CHECKS_NONE);
+
+  // 品目名称（オーバーライドがあればそれを優先）
+  const itemName = storeOverride?.name
+    ?? (isAsb ? 'がれき類' : '管理型混合廃棄物');
 
   return (
     <div className={`manifest ${(carrier2 || finalDest) ? 'manifest-asb' : 'manifest-none'}`}>
@@ -89,7 +106,7 @@ export default function Manifest({ request, type }: ManifestProps) {
         <div className="mf-date-box">
           日付
           <span className="date-val">
-            {d.y || ' '}年 {d.m || ' '}月 {d.d || ' '}日
+            {d.y || '　'}年 {d.m || '　'}月 {d.d || '　'}日
           </span>
         </div>
       </div>
@@ -113,7 +130,7 @@ export default function Manifest({ request, type }: ManifestProps) {
             </td>
             <td className="lbl">収集運搬業者</td>
             <td className="val" colSpan={3}>
-              <b>{carrier.name || ' '}</b>
+              <b>{carrier.name || '　'}</b>
             </td>
           </tr>
           <tr>
@@ -122,7 +139,7 @@ export default function Manifest({ request, type }: ManifestProps) {
               <b>{request.time_from} 〜 {request.time_to}</b>
             </td>
             <td className="lbl">収集運搬業者連絡先</td>
-            <td className="val" colSpan={3}>TEL：{carrier.tel || ' '}</td>
+            <td className="val" colSpan={3}>TEL：{carrier.tel || '　'}</td>
           </tr>
           <tr>
             <td className="lbl">依頼場所の名称</td>
@@ -178,14 +195,14 @@ export default function Manifest({ request, type }: ManifestProps) {
                   {label}{vol ? ` ${vol}㎡` : ''}
                 </span>
               ))}
-              {isAsb && ` 石綿含有 ${request.vol_asbestos || ''}㎡`}
+              {isAsb && `　石綿含有 ${request.vol_asbestos || ''}㎡`}
             </td>
             <td className="lbl">施工業者名</td>
             <td className="lbl">現場責任者名（担当者名）</td>
             <td className="lbl" colSpan={2}>現場責任者（連絡先）</td>
           </tr>
           <tr>
-            <td className="val"><b>{request.builder || ' '}</b></td>
+            <td className="val"><b>{request.builder || '　'}</b></td>
             <td className="val"><b className="blue">{request.chief}</b></td>
             <td className="val" colSpan={2}><b className="blue">{request.chief_tel}</b></td>
           </tr>
@@ -242,15 +259,12 @@ export default function Manifest({ request, type }: ManifestProps) {
                       fontSize: '10px',
                     }}
                   >
-                    {(s === '無' && request.helper === 'none') ||
-                      (s === '要' && request.helper === 'yes')
-                      ? '✓'
-                      : ''}
+                    {(s === '無' && request.helper === 'none') || (s === '要' && request.helper === 'yes') ? '✓' : ''}
                   </span>
                   {s}
                 </span>
               ))}
-              （ ）人
+              （　　）人
             </td>
           </tr>
           {request.note && (
@@ -340,7 +354,7 @@ export default function Manifest({ request, type }: ManifestProps) {
                 </td>
                 <td className="val" style={{ padding: '4px 6px', verticalAlign: 'top', width: '36%' }}>
                   <div style={{ fontSize: '8px', color: '#555', marginBottom: '3px' }}>
-                    種類（該当に☑ 無い物は空欄に記載）
+                    種類（該当に☑　無い物は空欄に記載）
                   </div>
                   <div
                     style={{
@@ -389,7 +403,7 @@ export default function Manifest({ request, type }: ManifestProps) {
                     width: '11%',
                   }}
                 >
-                  {isAsb ? 'がれき類' : '管理型混合廃棄物'}
+                  {itemName}
                 </td>
                 <td className="lbl" style={{ textAlign: 'center', verticalAlign: 'middle', width: '4%' }}>
                   数量
@@ -446,20 +460,20 @@ export default function Manifest({ request, type }: ManifestProps) {
                   運搬受託者
                 </td>
                 <td className="lbl" style={{ width: '7%' }}>氏名又は名称</td>
-                <td className="val" style={{ fontWeight: 700, width: '16%' }}>{carrier.name || ' '}</td>
+                <td className="val" style={{ fontWeight: 700, width: '16%' }}>{carrier.name || '　'}</td>
                 <td className="lbl" style={{ textAlign: 'center', fontSize: '9px', width: '6%' }}>加入者番号</td>
-                <td className="val" style={{ width: '6%' }}>{carrier.no || ' '}</td>
+                <td className="val" style={{ width: '6%' }}>{carrier.no || '　'}</td>
                 <td className="lbl" style={{ textAlign: 'center', fontSize: '9px', width: '6%' }}>公開パスワード</td>
-                <td className="val" style={{ width: '6%' }}>{carrier.pw || ' '}</td>
+                <td className="val" style={{ width: '6%' }}>{carrier.pw || '　'}</td>
                 <td className="lbl" style={{ writingMode: 'vertical-rl', fontSize: '10px', textAlign: 'center', width: '26px', minWidth: '26px', padding: '4px 2px' }} rowSpan={2}>
                   処分事業場
                 </td>
                 <td className="lbl" style={{ width: '7%' }}>氏名又は名称</td>
-                <td className="val" style={{ fontWeight: 700, width: '16%' }}>{dest.name || processor.name || ' '}</td>
+                <td className="val" style={{ fontWeight: 700, width: '16%' }}>{dest.name || processor.name || '　'}</td>
                 <td className="lbl" style={{ textAlign: 'center', fontSize: '9px', width: '6%' }}>加入者番号</td>
-                <td className="val" style={{ width: '6%' }}>{dest.no || processor.no || ' '}</td>
+                <td className="val" style={{ width: '6%' }}>{dest.no || processor.no || '　'}</td>
                 <td className="lbl" style={{ textAlign: 'center', fontSize: '9px', width: '6%' }}>公開パスワード</td>
-                <td className="val" style={{ width: '6%' }}>{dest.pw || processor.pw || ' '}</td>
+                <td className="val" style={{ width: '6%' }}>{dest.pw || processor.pw || '　'}</td>
               </tr>
               <tr>
                 <td className="lbl" style={{ verticalAlign: 'middle' }}>住所</td>
@@ -475,6 +489,7 @@ export default function Manifest({ request, type }: ManifestProps) {
                   {dest.addr || processor.addr || ''}
                 </td>
               </tr>
+
               {/* 処分受託者 行1 | 積替え 行1 */}
               <tr>
                 <td className="lbl" style={{ writingMode: 'vertical-rl', fontSize: '10px', textAlign: 'center', width: '26px', minWidth: '26px', padding: '4px 2px' }} rowSpan={2}>
@@ -482,7 +497,7 @@ export default function Manifest({ request, type }: ManifestProps) {
                 </td>
                 <td className="lbl">氏名又は名称</td>
                 <td className="val" style={{ fontWeight: 700 }} colSpan={5}>
-                  {processor.name || ' '}
+                  {processor.name || '　'}
                 </td>
                 <td className="lbl" style={{ writingMode: 'vertical-rl', fontSize: '10px', textAlign: 'center', width: '26px', minWidth: '26px', padding: '4px 2px' }} rowSpan={2}>
                   積替え又は保管
@@ -509,6 +524,7 @@ export default function Manifest({ request, type }: ManifestProps) {
                   ) : '＊＊＊＊＊＊＊＊＊＊＊'}
                 </td>
               </tr>
+
               {/* 最終処分先・収集運搬区間2（carrier2 or finalDest がある場合のみ表示） */}
               {(carrier2 || finalDest) && (
                 <>
@@ -518,14 +534,14 @@ export default function Manifest({ request, type }: ManifestProps) {
                     </td>
                     <td className="lbl">氏名又は名称</td>
                     <td className="val" style={{ fontWeight: 700 }} colSpan={5}>
-                      {finalDest ? finalDest.name : ' '}
+                      {finalDest ? finalDest.name : '　'}
                     </td>
                     <td className="lbl" style={{ writingMode: 'vertical-rl', fontSize: '9px', textAlign: 'center', width: '26px', minWidth: '26px', padding: '4px 2px', lineHeight: 1.2 }} rowSpan={2}>
                       収集運搬区間2
                     </td>
                     <td className="lbl">氏名又は名称</td>
                     <td className="val" style={{ fontWeight: 700 }} colSpan={5}>
-                      {carrier2 ? carrier2.name : ' '}
+                      {carrier2 ? carrier2.name : '　'}
                     </td>
                   </tr>
                   <tr>
@@ -536,7 +552,7 @@ export default function Manifest({ request, type }: ManifestProps) {
                           〒{finalDest.zip || ''} <span style={{ fontSize: '9px' }}>電話</span> {finalDest.tel || ''}
                           <br />{finalDest.addr || ''}
                         </>
-                      ) : ' '}
+                      ) : '　'}
                     </td>
                     <td className="lbl" style={{ verticalAlign: 'middle' }}>所在地</td>
                     <td className="val" colSpan={5} style={{ lineHeight: 1.6, padding: '5px 6px', fontSize: '10px', verticalAlign: 'middle' }}>
@@ -545,7 +561,7 @@ export default function Manifest({ request, type }: ManifestProps) {
                           〒{carrier2.zip || ''} TEL {carrier2.tel || ''}
                           <br />{carrier2.addr || ''}
                         </>
-                      ) : ' '}
+                      ) : '　'}
                     </td>
                   </tr>
                 </>
