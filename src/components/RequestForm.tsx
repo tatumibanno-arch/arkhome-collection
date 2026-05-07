@@ -24,6 +24,33 @@ function getMinDate(): string {
   return d.toISOString().split('T')[0];
 }
 
+// エラーオブジェクトから可読な文字列を抜き出す
+function extractErrorMessage(error: unknown): string {
+  if (!error) return '不明なエラー';
+  if (typeof error === 'string') return error;
+  if (error instanceof Error) {
+    // Supabase / fetchエラーは余分なプロパティを含むことがある
+    const anyErr = error as any;
+    const code = anyErr.code ? `[${anyErr.code}] ` : '';
+    const details = anyErr.details ? ` (${anyErr.details})` : '';
+    const hint = anyErr.hint ? ` hint: ${anyErr.hint}` : '';
+    return `${code}${error.message}${details}${hint}`;
+  }
+  if (typeof error === 'object') {
+    const anyErr = error as any;
+    if (anyErr.message) {
+      const code = anyErr.code ? `[${anyErr.code}] ` : '';
+      return `${code}${anyErr.message}`;
+    }
+    try {
+      return JSON.stringify(error);
+    } catch {
+      return String(error);
+    }
+  }
+  return String(error);
+}
+
 interface FormProps {
   onSubmitSuccess?: (request: Request) => void;
   showMemo?: boolean;
@@ -36,6 +63,7 @@ export default function RequestForm({ onSubmitSuccess, showMemo = false, showCon
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
+  const [submitError, setSubmitError] = useState<string>(''); // ★追加：送信時の詳細エラー
   const [confirming, setConfirming] = useState(false);
   const composingRef = useRef(false);
 
@@ -83,8 +111,8 @@ export default function RequestForm({ onSubmitSuccess, showMemo = false, showCon
         setVendors([]);
       }
     } catch (error) {
-      console.error('Failed to load data:', error);
-      showToast('データの読み込みに失敗しました');
+      console.error('[loadData] Failed to load data:', error);
+      showToast(`データの読み込みに失敗しました: ${extractErrorMessage(error)}`);
     }
   };
 
@@ -147,20 +175,41 @@ export default function RequestForm({ onSubmitSuccess, showMemo = false, showCon
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ storeId }),
       });
-      if (!res.ok) throw new Error('Routing fetch failed');
+      if (!res.ok) {
+        // ★レスポンス本文も含めて詳細を返す
+        let detail = '';
+        try {
+          detail = await res.text();
+        } catch {
+          // ignore
+        }
+        throw new Error(`/api/routing が失敗しました (HTTP ${res.status}) ${detail}`.trim());
+      }
       return await res.json();
     }
   };
 
   const handleSubmit = async () => {
     setLoading(true);
+    setSubmitError(''); // 前回エラーをクリア
+
+    // ★どの工程で失敗したかを示すステップラベル
+    let step = '初期化';
 
     try {
+      step = '店舗データ確認';
       const store = stores.find((s) => s.id === storeId);
-      if (!store) throw new Error('店舗が見つかりません');
+      if (!store) throw new Error('選択された店舗がデータに見つかりません');
 
+      step = 'ルーティング情報の取得';
       const { routingNone, routingAsb } = await fetchRouting();
 
+      // ★店舗マッピングが未登録の場合の警告（送信は継続）
+      if (!routingNone && !routingAsb) {
+        console.warn('[handleSubmit] No routing mapping found for store_id:', storeId);
+      }
+
+      step = '依頼情報のデータベース保存';
       const request = await createRequest({
         store_id: storeId,
         store_name: store.name,
@@ -191,15 +240,24 @@ export default function RequestForm({ onSubmitSuccess, showMemo = false, showCon
         routing_asb: routingAsb,
       });
 
-      const emailConfig = await getEmailConfig();
-      if (emailConfig) {
-        await sendNotifications(request, {
-          sharedEmail: emailConfig.shared_email,
-          serviceId: emailConfig.emailjs_service_id,
-          templateId: emailConfig.emailjs_template_id,
-          publicKey: emailConfig.emailjs_public_key,
-          slackWebhookUrl: emailConfig.slack_webhook_url,
-        });
+      // ★ここまで来ればDB保存は成功している
+      // 通知失敗はユーザー体験的にはエラーにせず、警告のみ出す
+      step = '通知送信（メール／Slack）';
+      try {
+        const emailConfig = await getEmailConfig();
+        if (emailConfig) {
+          const notifyResult = await sendNotifications(request, {
+            sharedEmail: emailConfig.shared_email,
+            serviceId: emailConfig.emailjs_service_id,
+            templateId: emailConfig.emailjs_template_id,
+            publicKey: emailConfig.emailjs_public_key,
+            slackWebhookUrl: emailConfig.slack_webhook_url,
+          });
+          console.log('[handleSubmit] notification result:', notifyResult);
+        }
+      } catch (notifyErr) {
+        // 通知失敗してもDBには入っているので、ユーザーには成功扱い＋ログだけ残す
+        console.error('[handleSubmit] notification failed (non-fatal):', notifyErr);
       }
 
       showToast(`依頼を送信しました（${request.request_code}）`);
@@ -210,8 +268,14 @@ export default function RequestForm({ onSubmitSuccess, showMemo = false, showCon
         onSubmitSuccess(request);
       }
     } catch (error) {
-      console.error('Failed to submit:', error);
-      showToast('送信に失敗しました');
+      const detail = extractErrorMessage(error);
+      // ★コンソールには構造化情報をすべて出す
+      console.error('[handleSubmit] Failed at step:', step, error);
+      console.error('[handleSubmit] error JSON:', JSON.stringify(error, Object.getOwnPropertyNames(error || {})));
+      // ★画面には「どの工程で」「何が起きたか」を出す
+      const userMessage = `送信に失敗しました（${step}）: ${detail}`;
+      setSubmitError(userMessage);
+      showToast(userMessage);
     } finally {
       setLoading(false);
     }
@@ -241,6 +305,7 @@ export default function RequestForm({ onSubmitSuccess, showMemo = false, showCon
     setVolAsbestos('');
     setNote('');
     setMemo('');
+    setSubmitError('');
   };
 
   const getStoreName = () => stores.find((s) => s.id === storeId)?.name || '';
@@ -339,6 +404,29 @@ export default function RequestForm({ onSubmitSuccess, showMemo = false, showCon
             </div>
           )}
         </div>
+        {/* ★送信エラーが発生した場合の詳細表示 */}
+        {submitError && (
+          <div
+            style={{
+              margin: '12px 26px 0',
+              padding: '12px 14px',
+              background: '#fff4f4',
+              border: '1px solid #f0b3b3',
+              borderRadius: '8px',
+              color: '#a02020',
+              fontSize: '12px',
+              lineHeight: 1.7,
+              whiteSpace: 'pre-wrap',
+              wordBreak: 'break-word',
+            }}
+          >
+            <div style={{ fontWeight: 700, marginBottom: '4px' }}>⚠ エラー詳細（このメッセージのスクリーンショットを送付ください）</div>
+            <div>{submitError}</div>
+            <div style={{ marginTop: '6px', fontSize: '11px', color: '#7a4040' }}>
+              ※ より詳しい情報が必要な場合は、F12キーを押して「Console」タブの内容も併せてお知らせください。
+            </div>
+          </div>
+        )}
         <div style={{ padding: '20px 26px', display: 'flex', gap: '10px' }}>
           <button
             onClick={handleSubmit}
@@ -475,13 +563,13 @@ export default function RequestForm({ onSubmitSuccess, showMemo = false, showCon
             <label>回収希望時間帯</label>
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
               <select value={timeFrom} onChange={(e) => {
-                  setTimeFrom(e.target.value);
-                  const hour = parseInt(e.target.value.split(':')[0]);
-                  const nextHour = hour + 1;
-                  if (nextHour <= 23) {
-                    setTimeTo(`${String(nextHour).padStart(2, '0')}:00`);
-                  }
-                }} style={{ flex: 1 }}>
+                setTimeFrom(e.target.value);
+                const hour = parseInt(e.target.value.split(':')[0]);
+                const nextHour = hour + 1;
+                if (nextHour <= 23) {
+                  setTimeTo(`${String(nextHour).padStart(2, '0')}:00`);
+                }
+              }} style={{ flex: 1 }}>
                 {timeOptions.map((t) => (<option key={t} value={t}>{t}</option>))}
               </select>
               <span style={{ color: 'var(--tx3)' }}>〜</span>
@@ -544,6 +632,30 @@ export default function RequestForm({ onSubmitSuccess, showMemo = false, showCon
           <h4>⚠ 以下の必須項目を入力してください</h4>
           <ul>{errors.map((err, i) => (<li key={i}>{err}</li>))}</ul>
         </div>
+
+        {/* ★送信エラーが発生した場合の詳細表示（入力画面側にも表示） */}
+        {submitError && (
+          <div
+            style={{
+              margin: '8px 0 12px',
+              padding: '12px 14px',
+              background: '#fff4f4',
+              border: '1px solid #f0b3b3',
+              borderRadius: '8px',
+              color: '#a02020',
+              fontSize: '12px',
+              lineHeight: 1.7,
+              whiteSpace: 'pre-wrap',
+              wordBreak: 'break-word',
+            }}
+          >
+            <div style={{ fontWeight: 700, marginBottom: '4px' }}>⚠ エラー詳細（このメッセージのスクリーンショットを送付ください）</div>
+            <div>{submitError}</div>
+            <div style={{ marginTop: '6px', fontSize: '11px', color: '#7a4040' }}>
+              ※ より詳しい情報が必要な場合は、F12キーを押して「Console」タブの内容も併せてお知らせください。
+            </div>
+          </div>
+        )}
 
         <div className="frow full">
           <div className="fg">
