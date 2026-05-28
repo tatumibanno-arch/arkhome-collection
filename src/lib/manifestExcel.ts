@@ -112,7 +112,12 @@ function fillAsb(s: any, req: Request) {
   const carrier: SnapLike = rt.carrier || {};
   const dest: SnapLike = rt.dest || {};
   const proc: SnapLike = rt.processor || {};
+  const finalDest: SnapLike = rt.final_dest || null;
   const transfer: SnapLike = rt.transfer || null;
+  // 茨木目垣店は積替え保管ありの特例：処分業者欄にマスターの「最終処分場」を入れる
+  const isIbaraki = req.store_name === 'アークホーム茨木目垣店';
+  const procBox: SnapLike =
+    isIbaraki && finalDest && finalDest.name ? finalDest : proc;
   const [y, m, d] = (req.collection_date || '').split('-');
 
   setCell(s, 'V2', intPart(y));
@@ -172,11 +177,11 @@ function fillAsb(s: any, req: Request) {
   setCell(s, 'V31', dest?.zip);
   setCell(s, 'Z31', dest?.tel);
   setCell(s, 'S32', dest?.addr);
-  // 処分業者
-  setCell(s, 'G33', proc?.name);
-  setCell(s, 'G35', proc?.zip);
-  setCell(s, 'K35', proc?.tel);
-  setCell(s, 'D36', proc?.addr);
+  // 処分業者（茨木目垣店は最終処分場を入れる）
+  setCell(s, 'G33', procBox?.name);
+  setCell(s, 'G35', procBox?.zip);
+  setCell(s, 'K35', procBox?.tel);
+  setCell(s, 'D36', procBox?.addr);
 
   // 積替え又は保管：マスターに登録があれば記入、なければ＊（米）
   if (transfer && transfer.name) {
@@ -189,8 +194,8 @@ function fillAsb(s: any, req: Request) {
     setCell(s, 'S36', '＊＊＊＊＊＊＊＊＊＊');
   }
 
-  // 茨木目垣店は積替え保管ありの特例：処分業者欄を「最終処分」表記に変更
-  if (req.store_name === 'アークホーム茨木目垣店') {
+  // 茨木目垣店は処分業者欄を「最終処分」表記に変更
+  if (isIbaraki) {
     setCell(s, 'B33', '（最終処分）　　処分業者');
   }
 }
