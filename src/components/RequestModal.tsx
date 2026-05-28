@@ -490,6 +490,17 @@ export default function RequestModal({
                 )}
               </div>
 
+              {/* 公式雛形に流し込んだExcelをダウンロード */}
+              <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                <button
+                  className="prt-btn-blue"
+                  style={{ flex: 1, background: 'var(--g)' }}
+                  onClick={() => { window.open(`/api/manifest?id=${request.id}&type=none`, '_blank'); }}
+                >
+                  📊 Excel（通常版）ダウンロード
+                </button>
+              </div>
+
               {parseInt(request.status) > 0 && (<button className="bk-btn" onClick={handleBackward}>◀ {STATUSES[String(parseInt(request.status) - 1) as RequestStatus]} に戻す</button>)}
               {parseInt(request.status) < 5 && (<button className="fwd-btn" onClick={handleForward}>▶ {STATUSES[String(parseInt(request.status) + 1) as RequestStatus]} へ進める</button>)}
               <button className="del-btn" onClick={handleDelete}>この依頼を削除</button>
