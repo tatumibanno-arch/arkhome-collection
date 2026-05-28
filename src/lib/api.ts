@@ -264,6 +264,28 @@ export async function createRequest(
   return data;
 }
 
+// お客様フォーム用：ブラウザから直接Supabaseへ書き込まず、同一オリジンのAPI経由で保存する。
+// 店舗側ネットワークが外部ドメインへの書き込みを遮断していても通るようにするための経路。
+export async function createRequestViaApi(
+  request: Omit<Request, 'id' | 'request_code' | 'created_at' | 'updated_at'>
+): Promise<Request> {
+  const res = await fetch('/api/requests', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(request),
+  });
+  if (!res.ok) {
+    let detail = '';
+    try {
+      detail = await res.text();
+    } catch {
+      // ignore
+    }
+    throw new Error(`/api/requests が失敗しました (HTTP ${res.status}) ${detail}`.trim());
+  }
+  return await res.json();
+}
+
 export async function updateRequestStatus(id: string, status: RequestStatus): Promise<Request> {
   const { data, error } = await supabase
     .from('requests')

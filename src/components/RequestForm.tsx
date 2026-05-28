@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { Store, Vendor, Request, HelperType } from '@/types';
-import { getStores, getVendors, createRequest, getRouting, getEmailConfig } from '@/lib/api';
+import { getStores, getVendors, createRequest, createRequestViaApi, getRouting, getEmailConfig } from '@/lib/api';
 import { generateTimeOptions, CAR_SIZES, toHanNum, formatPhone, formatZip, fetchAddressFromZip, isValidEmail } from '@/lib/utils';
 import { sendNotifications } from '@/lib/notifications';
 import { useToast } from './Toast';
@@ -210,7 +210,7 @@ export default function RequestForm({ onSubmitSuccess, showMemo = false, showCon
       }
 
       step = '依頼情報のデータベース保存';
-      const request = await createRequest({
+      const payload = {
         store_id: storeId,
         store_name: store.name,
         staff,
@@ -235,10 +235,17 @@ export default function RequestForm({ onSubmitSuccess, showMemo = false, showCon
         vol_asbestos: parseFloat(volAsbestos) || 0,
         note: note || null,
         memo: memo || null,
-        status: '0',
+        status: '0' as const,
         routing_none: routingNone,
         routing_asb: routingAsb,
-      });
+      };
+
+      // 社内フォーム（vendors取得済み）は従来どおりクライアント側で保存。
+      // お客様フォームは同一オリジンのAPI経由で保存（店舗側ネットワーク遮断対策）。
+      const request =
+        vendors.length > 0
+          ? await createRequest(payload)
+          : await createRequestViaApi(payload);
 
       // ★ここまで来ればDB保存は成功している
       // 通知失敗はユーザー体験的にはエラーにせず、警告のみ出す

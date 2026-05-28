@@ -107,8 +107,11 @@
 |------|-------|
 | `NEXT_PUBLIC_SUPABASE_URL` | `https://xxxxxxxx.supabase.co`（手順2-3でコピーしたURL） |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | `eyJhbGciOiJIUzI1NiIs...`（手順2-3でコピーしたキー） |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase「API」設定の **service_role** キー（**必須**・サーバー側API専用） |
 
 > **追加方法**: 「NAME」に変数名、「VALUE」に値を入力 → **「Add」**
+>
+> ⚠️ **`SUPABASE_SERVICE_ROLE_KEY` は必須です。** お客様用フォーム（`/form`）の送信は `/api/routing`・`/api/requests` を経由し、このキーを使います。未設定だと「送信に失敗しました」となり依頼が保存されません。サーバー側専用なので `NEXT_PUBLIC_` を付けないこと（付けるとブラウザに漏れます）。
 
 ### 4-3. デプロイ
 
