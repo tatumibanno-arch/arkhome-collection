@@ -188,6 +188,11 @@ function fillAsb(s: any, req: Request) {
     setCell(s, 'V33', '＊＊＊＊＊＊＊＊＊＊＊＊');
     setCell(s, 'S36', '＊＊＊＊＊＊＊＊＊＊');
   }
+
+  // 茨木目垣店は積替え保管ありの特例：処分業者欄を「最終処分」表記に変更
+  if (req.store_name === 'アークホーム茨木目垣店') {
+    setCell(s, 'B33', '（最終処分）　　処分業者');
+  }
 }
 
 export async function buildManifestExcel(
