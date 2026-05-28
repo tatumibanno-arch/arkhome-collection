@@ -12,7 +12,6 @@ interface RequestModalProps {
   onClose: () => void;
   onStatusChange: (id: string, status: RequestStatus) => void;
   onDelete: (id: string) => void;
-  onPrintManifest: (request: Request, type?: 'none' | 'asb') => void;
   onUpdated?: () => void;
 }
 
@@ -22,7 +21,6 @@ export default function RequestModal({
   onClose,
   onStatusChange,
   onDelete,
-  onPrintManifest,
   onUpdated,
 }: RequestModalProps) {
   const { showToast } = useToast();
@@ -468,26 +466,6 @@ export default function RequestModal({
                   </div>
                 </div>
                 {showStoreEmail && <pre className="et">{storeEmailText()}</pre>}
-              </div>
-
-              {/* マニフェスト印刷ボタン — 石綿なし/ありをそれぞれ選べるように */}
-              <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
-                <button
-                  className="prt-btn-blue"
-                  style={{ flex: 1 }}
-                  onClick={() => { onPrintManifest(request, 'none'); onClose(); }}
-                >
-                  📄 石綿なし マニフェスト印刷
-                </button>
-                {request.has_asbestos && (
-                  <button
-                    className="prt-btn-blue"
-                    style={{ flex: 1, background: 'var(--rd)' }}
-                    onClick={() => { onPrintManifest(request, 'asb'); onClose(); }}
-                  >
-                    📄 石綿あり マニフェスト印刷
-                  </button>
-                )}
               </div>
 
               {/* 公式雛形に流し込んだExcelをダウンロード */}

@@ -6,14 +6,12 @@ interface ListViewProps {
   requests: Request[];
   onCardClick: (request: Request) => void;
   onStatusChange: (id: string, status: RequestStatus) => void;
-  onPrintManifest: (request: Request) => void;
 }
 
 export default function ListView({
   requests,
   onCardClick,
   onStatusChange,
-  onPrintManifest,
 }: ListViewProps) {
   const handleForward = (e: React.MouseEvent, request: Request) => {
     e.stopPropagation();
@@ -29,11 +27,6 @@ export default function ListView({
     if (currentStatus > 0) {
       onStatusChange(request.id, String(currentStatus - 1) as RequestStatus);
     }
-  };
-
-  const handlePrint = (e: React.MouseEvent, request: Request) => {
-    e.stopPropagation();
-    onPrintManifest(request);
   };
 
   if (requests.length === 0) {
@@ -174,13 +167,6 @@ export default function ListView({
                 padding: '9px 8px',
               }}
             >
-              <button
-                className="kb-btn"
-                style={{ flex: 'none', padding: '4px 7px' }}
-                onClick={(e) => handlePrint(e, request)}
-              >
-                📄
-              </button>
               {parseInt(request.status) > 0 && (
                 <button
                   className="kb-btn bk"

@@ -1,12 +1,11 @@
 'use client';
 
-import { Request, RequestStatus, STATUSES, STATUS_BG, STATUS_FG } from '@/types';
+import { Request, RequestStatus, STATUSES } from '@/types';
 
 interface KanbanBoardProps {
   requests: Request[];
   onCardClick: (request: Request) => void;
   onStatusChange: (id: string, status: RequestStatus) => void;
-  onPrintManifest: (request: Request) => void;
 }
 
 const COLUMN_CLASSES = ['s-new', 's0', 's1', 's2', 's3', 's4'];
@@ -15,7 +14,6 @@ export default function KanbanBoard({
   requests,
   onCardClick,
   onStatusChange,
-  onPrintManifest,
 }: KanbanBoardProps) {
   const getColumnRequests = (status: RequestStatus) => {
     return requests.filter((r) => r.status === status);
@@ -35,11 +33,6 @@ export default function KanbanBoard({
     if (currentStatus > 0) {
       onStatusChange(request.id, String(currentStatus - 1) as RequestStatus);
     }
-  };
-
-  const handlePrint = (e: React.MouseEvent, request: Request) => {
-    e.stopPropagation();
-    onPrintManifest(request);
   };
 
   return (
@@ -115,13 +108,6 @@ export default function KanbanBoard({
                         }}
                       >
                         詳細
-                      </button>
-                      <button
-                        className="kb-btn"
-                        onClick={(e) => handlePrint(e, request)}
-                        title="印刷"
-                      >
-                        📄
                       </button>
                       {parseInt(status) > 0 && (
                         <button
