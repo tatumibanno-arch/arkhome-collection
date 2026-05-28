@@ -497,8 +497,17 @@ export default function RequestModal({
                   style={{ flex: 1, background: 'var(--g)' }}
                   onClick={() => { window.open(`/api/manifest?id=${request.id}&type=none`, '_blank'); }}
                 >
-                  📊 Excel（通常版）ダウンロード
+                  📊 Excel（通常版）
                 </button>
+                {request.has_asbestos && (
+                  <button
+                    className="prt-btn-blue"
+                    style={{ flex: 1, background: 'var(--rd)' }}
+                    onClick={() => { window.open(`/api/manifest?id=${request.id}&type=asb`, '_blank'); }}
+                  >
+                    📊 Excel（石綿あり）
+                  </button>
+                )}
               </div>
 
               {parseInt(request.status) > 0 && (<button className="bk-btn" onClick={handleBackward}>◀ {STATUSES[String(parseInt(request.status) - 1) as RequestStatus]} に戻す</button>)}
