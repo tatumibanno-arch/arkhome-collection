@@ -89,10 +89,14 @@ export async function buildManifestExcel(
   if (req.vol_toilet > 0) { set('G10', req.vol_toilet); check('G9'); }
   if (req.vol_other > 0) { set('L10', req.vol_other); check('L9'); }
 
-  // 車両サイズ
-  if (req.car_size === '軽トラ') check('G12');
-  else if (req.car_size === '2t車') check('J12');
-  else if (req.car_size === '4t車') check('M12');
+  // 車両サイズ（行11）
+  if (req.car_size === '軽トラ') check('G11');
+  else if (req.car_size === '2t車') check('J11');
+  else if (req.car_size === '4t車') check('M11');
+
+  // 補助人工の依頼（行10：V10=無 / W10内の□=要）
+  if (req.helper === 'yes') check('W10');
+  else check('V10');
 
   // マニフェスト本体：排出事業場・店舗
   set('D15', req.store_name);
